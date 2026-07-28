@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Memento Mori — Life Dashboard</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: linear-gradient(160deg, #FFF9F0 0%, #FFF3F7 40%, #F3F8FF 100%);
+    color: #1A1A2E; min-height: 100vh; padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 {
+    font-size: clamp(32px, 6vw, 56px); font-weight: 900; letter-spacing: -1px;
+    background: linear-gradient(90deg, #FF6B6B, #FFC93C, #2EC4B6, #9B5DE5, #FF6B6B);
+    background-size: 300% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
+    animation: shimmer 8s linear infinite;
+  }
+  @keyframes shimmer { to { background-position: 300% center; } }
+  header p.tagline { font-size: 15px; color: #6b6b80; margin-top: 6px; font-weight: 600; letter-spacing: 0.5px; }
+  header .clock { margin-top: 10px; font-size: 13px; color: #9a9ab0; font-variant-numeric: tabular-nums; }
+
+  .card {
+    background: #ffffff; border-radius: 20px; padding: 22px 24px; margin-bottom: 20px;
+    box-shadow: 0 4px 24px rgba(30,20,60,0.07); border-top: 5px solid var(--accent, #FF6B6B);
+  }
+  .card h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: #8a8aa0; font-weight: 800;
+    margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .badge { font-size:10px; background:#f1f1f6; color:#8a8aa0; padding:2px 8px; border-radius:999px; font-weight:800; letter-spacing:.4px; }
+
+  .field { text-align: left; margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 800; color: #8a8aa0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; padding: 12px 14px; font-size: 16px; border-radius: 12px;
+    border: 2px solid #eee0e8; background: #FFFBF5; color: #1A1A2E; font-family: inherit;
+  }
+  .field input:focus, .field textarea:focus { outline: none; border-color: #FF6B6B; }
+
+  .btn {
+    display: inline-block; border: none; cursor: pointer; font-weight: 800; font-size: 15px;
+    padding: 13px 28px; border-radius: 14px; color: #fff; font-family: inherit;
+    background: linear-gradient(90deg, #FF6B6B, #FF9F1C); box-shadow: 0 6px 18px rgba(255,107,107,0.35);
+    transition: transform .15s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.secondary { background: #f1f1f6; color: #55556a; box-shadow: none; font-size: 13px; padding: 9px 18px; }
+  .btn.tiny { padding: 7px 14px; font-size: 12px; border-radius: 10px; }
+  .btn:disabled { opacity: .35; cursor: not-allowed; transform:none; }
+
+  .chip-row { display:flex; flex-wrap:wrap; gap:10px; margin-top: 6px; }
+  .chip {
+    border: 2px solid #eee0e8; background:#FFFBF5; padding: 12px 18px; border-radius: 14px;
+    font-family: inherit; font-weight:700; font-size:14px; cursor:pointer; color:#1A1A2E; transition: all .15s ease;
+  }
+  .chip:hover { border-color:#FF6B6B; transform: translateY(-2px); }
+  .chip.picked { background: linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff; border-color:transparent; }
+
+  /* ---------- WIZARD ---------- */
+  #wizardCard { max-width: 560px; margin: 0 auto; text-align: center; }
+  .wizard-progress { background:#f1f1f6; height:6px; border-radius:999px; overflow:hidden; margin-bottom: 10px; }
+  .wizard-bar { height:100%; background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6); transition: width .3s ease; }
+  .wizard-step-label { font-size:11px; font-weight:800; color:#b0b0c0; text-transform:uppercase; letter-spacing:.6px; margin-bottom:18px; }
+  .wstep { display:none; }
+  .wstep.active { display:block; animation: fadein .35s ease; }
+  @keyframes fadein { from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+  .wstep h3 { font-size:21px; font-weight:900; margin-bottom:6px; }
+  .wstep p.hint { font-size:13px; color:#8a8aa0; margin-bottom:16px; line-height:1.5; }
+  .wizard-nav { display:flex; justify-content:space-between; align-items:center; margin-top: 22px; gap:8px; flex-wrap:wrap; }
+  .wizard-nav .spacer { flex:1; }
+
+  .result-table { text-align:left; background:#FFFBF5; border-radius:14px; padding:14px 16px; margin: 14px 0; }
+  .result-row { display:flex; justify-content:space-between; font-size:13px; padding:5px 0; border-bottom:1px solid #f1f1f6; }
+  .result-row:last-child { border-bottom:none; }
+  .result-row .mult { font-weight:800; }
+  .result-row .mult.up { color:#FF3D3D; }
+  .result-row .mult.down { color:#06D6A0; }
+  .result-final { font-size: 30px; font-weight:900; margin: 14px 0 4px; }
+  .result-final span { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
+
+  #dashboard { display: none; }
+  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+  .topbar .who { font-size: 18px; font-weight: 800; }
+  .topbar .actions { display: flex; gap: 8px; flex-wrap:wrap; }
+
+  .hero { display: grid; grid-template-columns: 1fr 220px; gap: 24px; align-items: center; }
+  @media (max-width: 700px) { .hero { grid-template-columns: 1fr; } }
+  .hero .big-stat { font-size: clamp(30px, 5.4vw, 48px); font-weight: 900; line-height: 1.15; }
+  .hero .big-stat span.pct { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero .sub { color: #6b6b80; font-size: 14px; margin-top: 8px; font-weight: 600; }
+  .progress-outer { background: #f1f1f6; border-radius: 999px; height: 16px; margin-top: 18px; overflow: hidden; }
+  .progress-inner { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6); transition: width .6s ease; }
+  .ring-wrap { display:flex; align-items:center; justify-content:center; }
+  .ring {
+    width: 190px; height: 190px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    flex-direction: column; background: conic-gradient(#FF6B6B calc(var(--p) * 1%), #f1f1f6 0); position: relative;
+  }
+  .ring::before { content:""; position:absolute; width:150px; height:150px; background:#fff; border-radius:50%; }
+  .ring .ring-txt { position: relative; text-align: center; }
+  .ring .ring-txt b { font-size: 30px; display:block; }
+  .ring .ring-txt small { font-size: 11px; color:#8a8aa0; font-weight:700; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
+  .stat-box { background: #FFFBF5; border-radius: 14px; padding: 14px 16px; border-left: 4px solid var(--c,#FF6B6B); }
+  .stat-box .num { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .stat-box .lbl { font-size: 11.5px; color: #8a8aa0; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+
+  .countdown-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .cd-box { background: #1A1A2E; color: #fff; border-radius: 14px; padding: 14px 10px; min-width: 78px; text-align: center; }
+  .cd-box .n { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; background: linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .cd-box .u { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #b8b8cc; margin-top: 2px; }
+
+  .grid-tabs { display:flex; gap:8px; margin-bottom: 14px; flex-wrap:wrap; }
+  .grid-tab { border:2px solid #eee0e8; background:#fff; padding:7px 16px; border-radius:999px; font-weight:800; font-size:12px; cursor:pointer; color:#8a8aa0; }
+  .grid-tab.active { background: linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff; border-color:transparent; }
+  .grid-legend { display:flex; gap:16px; font-size: 12px; color:#6b6b80; margin-bottom: 14px; flex-wrap:wrap; }
+  .grid-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .swatch { width:11px; height:11px; border-radius:3px; display:inline-block; }
+  .weeks-scroll { overflow-x: auto; padding-bottom: 6px; }
+  .weeks-grid { display: inline-grid; grid-auto-flow: row; gap: 3px; }
+  .wk-row { display:flex; gap:3px; align-items:center; }
+  .wk-yr { width:28px; font-size:9px; color:#b0b0c0; font-weight:700; text-align:right; padding-right:4px; flex-shrink:0; }
+  .wk-cell { width: 8px; height: 8px; border-radius: 2px; background:#eee; flex-shrink:0; }
+  .wk-cell.current { outline: 2px solid #FF3D3D; outline-offset: 1px; animation: pulse 1.4s ease-in-out infinite; }
+  .dec-cell { width:46px; height:46px; border-radius:10px; background:#eee; flex-shrink:0; position:relative; overflow:hidden; }
+  .dec-cell .fillbar { position:absolute; left:0; top:0; bottom:0; }
+  .dec-cell.current { outline:2px solid #FF3D3D; animation: pulse2 1.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.6); } }
+  @keyframes pulse2 { 0%,100% { box-shadow:0 0 0 0 rgba(255,61,61,.5);} 50% { box-shadow:0 0 0 6px rgba(255,61,61,0);} }
+
+  .milestones { display:flex; gap: 14px; overflow-x: auto; padding: 6px 2px 12px; }
+  .ms-item { flex-shrink:0; text-align:center; min-width: 66px; }
+  .ms-dot { width: 42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; margin: 0 auto 6px; }
+  .ms-dot.done { background: linear-gradient(135deg,#2EC4B6,#06D6A0); color:#fff; }
+  .ms-dot.next { background: linear-gradient(135deg,#FFC93C,#FF9F1C); color:#fff; box-shadow: 0 0 0 4px rgba(255,201,60,.3); }
+  .ms-dot.future { background:#f1f1f6; color:#b0b0c0; }
+  .ms-item .ms-lbl { font-size: 11px; color:#8a8aa0; font-weight:700; }
+
+  .quote-card { background: linear-gradient(120deg,#1A1A2E,#2D2A4A); color:#fff; border-top:none; text-align:center; padding: 34px 26px; }
+  .quote-card .qtag { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#9B5DE5; font-weight:800; margin-bottom:12px; }
+  .quote-card q { font-size: clamp(17px,2.4vw,22px); font-weight: 700; line-height:1.5; display:block; font-style: italic; }
+  .quote-card .auth { margin-top: 14px; font-size: 12.5px; color:#c9c9e0; font-weight:700; letter-spacing:.4px; }
+  .quote-dots { display:flex; gap:6px; justify-content:center; margin-top:16px; flex-wrap:wrap; max-width:280px; margin-left:auto; margin-right:auto; }
+  .quote-dots span { width:6px; height:6px; border-radius:50%; background:#4a4a6a; }
+  .quote-dots span.on { background: linear-gradient(90deg,#FFC93C,#FF6B6B); }
+
+  .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+  @media (max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+  .three-col { display:grid; grid-template-columns: repeat(3,1fr); gap:14px; }
+  @media (max-width:700px){ .three-col{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:460px){ .three-col{ grid-template-columns:1fr; } }
+
+  .season-badge { font-size: 42px; }
+  .analogy-bar { background:#f1f1f6; border-radius: 999px; height:10px; margin-top:8px; overflow:hidden; }
+  .analogy-fill { height:100%; border-radius:999px; background: linear-gradient(90deg,#4D96FF,#9B5DE5); }
+
+  /* check-in */
+  .checkin-buttons { display:flex; gap:10px; margin-bottom: 12px; }
+  .yn-btn { flex:1; padding:14px; border-radius:14px; border:2px solid #eee0e8; background:#fff; font-weight:800; cursor:pointer; font-family:inherit; font-size:14px; }
+  .yn-btn.yes.picked { background: linear-gradient(90deg,#06D6A0,#2EC4B6); color:#fff; border-color:transparent; }
+  .yn-btn.no.picked { background: linear-gradient(90deg,#8a8aa0,#6b6b80); color:#fff; border-color:transparent; }
+  .streak-row { display:flex; gap:14px; align-items:center; margin: 14px 0; flex-wrap:wrap; }
+  .streak-badge { background: linear-gradient(135deg,#FFC93C,#FF9F1C); color:#fff; border-radius:14px; padding:10px 18px; font-weight:900; font-size:20px; text-align:center; }
+  .streak-badge small { display:block; font-size:9px; font-weight:800; text-transform:uppercase; opacity:.85; }
+  .dot-history { display:flex; gap:5px; flex-wrap:wrap; }
+  .hist-dot { width:16px; height:16px; border-radius:5px; background:#eee; }
+  .hist-dot.yes { background: linear-gradient(135deg,#06D6A0,#2EC4B6); }
+  .hist-dot.no { background:#d8d8e2; }
+
+  /* pillars */
+  .pillar-card { background:#FFFBF5; border-radius:14px; padding:14px; border-top:4px solid var(--pc,#FF6B6B); }
+  .pillar-card h4 { font-size:14px; font-weight:900; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+  .pillar-card input[type=text] { width:100%; padding:8px 10px; border-radius:8px; border:1.5px solid #eee0e8; font-family:inherit; font-size:13px; margin-bottom:6px; background:#fff; }
+  .pillar-card input[type=date] { width:100%; padding:6px 8px; border-radius:8px; border:1.5px solid #eee0e8; font-family:inherit; font-size:12px; background:#fff; }
+  .pillar-card label.done-lbl { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:#8a8aa0; margin-top:8px; }
+
+  /* letters */
+  .letter-item { background:#FFFBF5; border-radius:14px; padding:14px 16px; margin-bottom:10px; text-align:left; }
+  .letter-item.locked { background:#1A1A2E; color:#fff; }
+  .letter-item .lmeta { font-size:11px; color:#8a8aa0; font-weight:700; margin-bottom:6px; }
+  .letter-item.locked .lmeta { color:#9B5DE5; }
+  .letter-item .ltext { font-size:14px; line-height:1.5; white-space:pre-wrap; }
+
+  .decade-picker { display:flex; flex-wrap:wrap; gap:12px; margin-top:14px; }
+  .decade-picker .dp-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .decade-picker input[type=color] { width:40px; height:40px; border-radius:10px; border:2px solid #eee0e8; cursor:pointer; padding:0; background:none; }
+  .decade-picker .dp-lbl { font-size:10px; font-weight:800; color:#8a8aa0; }
+
+  .mood-swatch {
+    border:2px solid #eee0e8; background:#fff; width:50px; height:50px; border-radius:50%;
+    font-size:22px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: all .15s ease;
+  }
+  .mood-swatch:hover { transform: translateY(-2px); border-color: var(--mc); }
+  .mood-swatch.picked { background: var(--mc); border-color: transparent; box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+
+  .time-row { margin-bottom: 16px; }
+  .time-row .trow-top { display:flex; justify-content:space-between; font-size:13px; font-weight:800; margin-bottom:6px; }
+  .time-row .trow-top .hrs { color:#8a8aa0; font-weight:700; }
+  .time-row input[type=range] { width:100%; accent-color: var(--tc,#FF6B6B); height:6px; }
+  .time-row .tproj { font-size:11.5px; color:#8a8aa0; margin-top:4px; font-weight:700; }
+  .time-row .tproj b { color:#1A1A2E; }
+
+  footer { text-align:center; margin-top: 30px; font-size: 13px; color:#8a8aa0; line-height:1.8; font-weight:600; }
+  footer .big-close { display:block; font-size:17px; font-weight:900; color:#1A1A2E; margin-bottom:8px; }
+
+  @keyframes heartbeat { 0%,100%{ transform:scale(1); } 20%{ transform:scale(1.035); } 35%{ transform:scale(1); } 50%{ transform:scale(1.02); } 65%{ transform:scale(1); } }
+  .ring { animation: heartbeat 1.2s ease-in-out infinite; }
+
+  /* ---------- REFLECTION OVERLAY ---------- */
+  #reflectionOverlay {
+    display:none; position:fixed; inset:0; z-index:999; cursor:pointer;
+    background: radial-gradient(circle at 50% 30%, #2D2A4A 0%, #1A1A2E 70%);
+    align-items:center; justify-content:center; flex-direction:column; padding:24px; text-align:center;
+  }
+  #reflSkip {
+    position:absolute; top:20px; right:20px; background:rgba(255,255,255,.08); color:#c9c9e0; border:none;
+    padding:8px 16px; border-radius:999px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;
+  }
+  #reflBox { max-width: 560px; }
+  #reflBig {
+    font-size: clamp(26px,5vw,42px); font-weight:900; color:#fff; line-height:1.25;
+    background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6,#9B5DE5);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  #reflSub { font-size: clamp(14px,2.4vw,18px); color:#d8d8ea; font-weight:600; margin-top:14px; }
+  #reflDots { display:flex; gap:7px; justify-content:center; margin-top:34px; }
+  #reflDots span { width:7px; height:7px; border-radius:50%; background:#3f3d5c; }
+  #reflDots span.on { background:#fff; }
+  #reflEnterBtn { display:none; margin-top:30px; }
+</style>
+</head>
+<body>
+
+<div id="reflectionOverlay" onclick="handleReflClick(event)">
+  <button id="reflSkip" onclick="event.stopPropagation(); skipReflection();">Skip →</button>
+  <div id="reflBox">
+    <div id="reflBig">—</div>
+    <div id="reflSub"></div>
+    <div id="reflDots"></div>
+    <button class="btn" id="reflEnterBtn" onclick="event.stopPropagation(); closeReflection();">Enter Your Dashboard →</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <header>
+    <h1>MEMENTO MORI</h1>
+    <p class="tagline">Remember — you will die. So live.</p>
+    <div class="clock" id="liveClock"></div>
+  </header>
+
+  <!-- WIZARD (multi-step onboarding, one question at a time) -->
+  <div class="card" id="wizardCard">
+    <div class="wizard-progress"><div class="wizard-bar" id="wizProgress" style="width:10%"></div></div>
+    <div class="wizard-step-label" id="wizStepLabel">Step 1 of 10</div>
+
+    <div class="wstep active" data-step="0">
+      <h3>First, who's asking?</h3>
+      <p class="hint">Just a name — makes the rest of this feel less like a form. Everything you type stays in this browser, nowhere else.</p>
+      <div class="field"><input type="text" id="q_name" placeholder="e.g. Alex"></div>
+    </div>
+
+    <div class="wstep" data-step="1">
+      <h3>When did your story start?</h3>
+      <p class="hint">The one fact this whole thing is actually built on. Everything after this is optional.</p>
+      <div class="field"><input type="date" id="q_dob"></div>
+    </div>
+
+    <div class="wstep" data-step="2">
+      <h3>Quick one —</h3>
+      <p class="hint">just to set a realistic starting point. Population life-expectancy averages differ by sex; that's the only reason this is here.</p>
+      <div class="chip-row" id="chip_sex">
+        <button class="chip" data-v="female" onclick="pickChip('sex','female',this)">Female</button>
+        <button class="chip" data-v="male" onclick="pickChip('sex','male',this)">Male</button>
+        <button class="chip" data-v="other" onclick="pickChip('sex','other',this)">Prefer not to say</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="3">
+      <h3>Be honest here.</h3>
+      <p class="hint">This one single-handedly moves the number more than anything else on this list.</p>
+      <div class="chip-row" id="chip_smoking">
+        <button class="chip" data-v="never" onclick="pickChip('smoking','never',this)">Never smoked</button>
+        <button class="chip" data-v="former" onclick="pickChip('smoking','former',this)">Former smoker</button>
+        <button class="chip" data-v="current" onclick="pickChip('smoking','current',this)">Current smoker</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="4">
+      <h3>Roughly, where do you sit?</h3>
+      <p class="hint">A ballpark is fine — this isn't a scale.</p>
+      <div class="chip-row" id="chip_bmi">
+        <button class="chip" data-v="underweight" onclick="pickChip('bmi','underweight',this)">Underweight</button>
+        <button class="chip" data-v="normal" onclick="pickChip('bmi','normal',this)">Normal</button>
+        <button class="chip" data-v="overweight" onclick="pickChip('bmi','overweight',this)">Overweight</button>
+        <button class="chip" data-v="obese" onclick="pickChip('bmi','obese',this)">Obese</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="5">
+      <h3>How much do you actually move?</h3>
+      <p class="hint">Weekly moderate-to-vigorous exercise, not intentions.</p>
+      <div class="chip-row" id="chip_activity">
+        <button class="chip" data-v="inactive" onclick="pickChip('activity','inactive',this)">Inactive</button>
+        <button class="chip" data-v="somewhat" onclick="pickChip('activity','somewhat',this)">Somewhat active</button>
+        <button class="chip" data-v="active" onclick="pickChip('activity','active',this)">Active</button>
+        <button class="chip" data-v="very" onclick="pickChip('activity','very',this)">Very active</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="6">
+      <h3>And drinking?</h3>
+      <div class="chip-row" id="chip_alcohol">
+        <button class="chip" data-v="none" onclick="pickChip('alcohol','none',this)">None</button>
+        <button class="chip" data-v="moderate" onclick="pickChip('alcohol','moderate',this)">Moderate</button>
+        <button class="chip" data-v="heavy" onclick="pickChip('alcohol','heavy',this)">Heavy</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="7">
+      <h3>How's the food, generally?</h3>
+      <div class="chip-row" id="chip_diet">
+        <button class="chip" data-v="poor" onclick="pickChip('diet','poor',this)">Poor</button>
+        <button class="chip" data-v="average" onclick="pickChip('diet','average',this)">Average</button>
+        <button class="chip" data-v="good" onclick="pickChip('diet','good',this)">Good</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="8">
+      <h3>Last one before the reveal.</h3>
+      <p class="hint">Typical hours per night.</p>
+      <div class="chip-row" id="chip_sleep">
+        <button class="chip" data-v="short" onclick="pickChip('sleep','short',this)">Under 7 hrs</button>
+        <button class="chip" data-v="mid" onclick="pickChip('sleep','mid',this)">7–8 hrs</button>
+        <button class="chip" data-v="long" onclick="pickChip('sleep','long',this)">9+ hrs</button>
+      </div>
+    </div>
+
+    <div class="wstep" data-step="9">
+      <h3>Here's what the numbers say.</h3>
+      <p class="hint">Baseline life expectancy, adjusted by hazard ratios from published cohort studies (smoking, BMI, activity, alcohol, diet, sleep) — the same method actuarial calculators use. Not a prediction. Yours to override.</p>
+      <div class="result-table" id="resultTable"></div>
+      <div class="result-final">Estimated lifespan: <span id="resultFinal">—</span> years</div>
+      <div class="field"><label>Use this number (edit if you'd like)</label><input type="number" id="q_expectancy" min="1" max="130" step="0.1"></div>
+      <div class="field">
+        <label>Or just pick a round number</label>
+        <div class="chip-row">
+          <button class="chip" onclick="$('q_expectancy').value=60">60</button>
+          <button class="chip" onclick="$('q_expectancy').value=70">70</button>
+          <button class="chip" onclick="$('q_expectancy').value=80">80</button>
+          <button class="chip" onclick="$('q_expectancy').value=90">90</button>
+          <button class="chip" onclick="$('q_expectancy').value=100">100</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-nav">
+      <button class="btn secondary tiny" id="wizBack" onclick="wizardBack()">← Back</button>
+      <button class="btn secondary tiny" id="wizSkip" onclick="wizardSkipToResult()">Skip lifestyle questions →</button>
+      <div class="spacer"></div>
+      <button class="btn tiny" id="wizNext" onclick="wizardNext()">Next →</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard">
+
+    <div class="topbar">
+      <div class="who" id="whoLine"></div>
+      <div class="actions">
+        <button class="btn secondary tiny" onclick="replayReflection()">🌙 Replay Reflection</button>
+        <button class="btn secondary tiny" onclick="shareStats()">📋 Copy Summary</button>
+        <button class="btn secondary tiny" onclick="editInfo()">✏️ Edit</button>
+        <button class="btn secondary tiny" onclick="resetAll()">↺ Reset</button>
+      </div>
+    </div>
+
+    <div class="card" style="--accent:#FF9F1C">
+      <h2>🔥 Carpe Diem — what's left of today</h2>
+      <div class="countdown-row" id="todayCountdown"></div>
+      <div class="sub" style="text-align:center;margin-top:10px;">How will you use the time that's left of today? What actually matters gets done now, not "eventually."</div>
+    </div>
+
+    <div class="card" style="--accent:#FF6B6B">
+      <div class="hero">
+        <div>
+          <div class="big-stat"><span class="pct" id="pctLived">0%</span> of your estimated life is behind you</div>
+          <div class="sub" id="weekLine"></div>
+          <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
+        </div>
+        <div class="ring-wrap">
+          <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="--accent:#9B5DE5">
+      <h2>⏳ Estimated Time Remaining (ticking live)</h2>
+      <div class="countdown-row" id="lifeCountdown"></div>
+    </div>
+
+    <div class="card" style="--accent:#2EC4B6">
+      <h2>📊 Your Numbers</h2>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <div class="card" style="--accent:#FFC93C">
+      <h2>🎂 Countdown To Your Next Birthday</h2>
+      <div class="countdown-row" id="birthdayCountdown"></div>
+    </div>
+
+    <div class="card" style="--accent:#4D96FF">
+      <h2>🗓️ Your Life — pick a view <span class="badge" id="gridTotalBadge"></span></h2>
+      <div class="grid-tabs" id="gridTabs">
+        <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
+        <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
+        <button class="grid-tab" data-m="years" onclick="setGridMode('years')">Years</button>
+        <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
+      </div>
+      <div class="grid-legend">
+        <span><i class="swatch" style="background:rgba(255,107,107,.14)"></i>Future — pale preview of that decade's color</span>
+        <span><i class="swatch" style="background:#FF6B6B"></i>Lived — full color</span>
+        <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
+      </div>
+      <div class="weeks-scroll"><div class="weeks-grid" id="weeksGrid"></div></div>
+      <div style="margin-top:16px;">
+        <button class="btn secondary tiny" onclick="togglePicker()">🎨 Customize each decade's color</button>
+        <div class="decade-picker" id="decadePicker" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="--accent:#06D6A0">
+      <h2>🏁 Milestones</h2>
+      <div class="milestones" id="milestones"></div>
+      <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card" style="--accent:#FF9F1C">
+        <h2>🍂 Season of Life</h2>
+        <div class="season-badge" id="seasonIcon">🌱</div>
+        <div id="seasonText" style="font-weight:800;font-size:16px;margin-top:6px;"></div>
+        <div class="sub" id="seasonSub"></div>
+      </div>
+      <div class="card" style="--accent:#C77DFF">
+        <h2>🎬 Perspective</h2>
+        <div id="movieLine" style="font-size:13.5px;font-weight:700;color:#55556a;"></div>
+        <div class="analogy-bar"><div class="analogy-fill" id="movieFill" style="width:0%"></div></div>
+        <div id="bookLine" style="font-size:13.5px;font-weight:700;color:#55556a;margin-top:14px;"></div>
+        <div class="analogy-bar"><div class="analogy-fill" id="bookFill" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="--accent:#FF6B6B">
+      <h2>✨ Fun Facts About Your Time So Far</h2>
+      <div class="stat-grid" id="funGrid"></div>
+    </div>
+
+    <!-- TIME ACCOUNTING -->
+    <div class="card" style="--accent:#2EC4B6">
+      <h2>⏱️ Time Accounting — where your week actually goes <span class="badge" id="timeTotalBadge"></span></h2>
+      <p class="sub" style="margin-bottom:14px;">Drag each slider to roughly how many hours a week go to each. The math translates that straight into years of your remaining estimated life.</p>
+      <div id="timeSliders"></div>
+    </div>
+
+    <!-- DAILY CHECK-IN + STREAK -->
+    <div class="card" style="--accent:#06D6A0">
+      <h2>✅ Evening Check-In — did today count?</h2>
+      <div class="checkin-buttons">
+        <button class="yn-btn yes" id="ynYes" onclick="setCheckin(true)">Yes</button>
+        <button class="yn-btn no" id="ynNo" onclick="setCheckin(false)">No</button>
+      </div>
+      <div class="field" style="margin-bottom:6px;">
+        <label>How did today actually feel? (colors your history strip below)</label>
+        <div class="chip-row" id="moodRow">
+          <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
+          <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
+          <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
+          <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
+          <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:8px;"><textarea id="checkinNote" rows="2" placeholder="Optional note to your future self about today..." onblur="saveCheckinNote()"></textarea></div>
+      <div class="streak-row">
+        <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
+        <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
+        <div class="dot-history" id="histDots"></div>
+      </div>
+    </div>
+
+    <!-- SIX PILLARS / VOWS -->
+    <div class="card" style="--accent:#9B5DE5">
+      <h2>🧭 The Six Pillars — your vows</h2>
+      <div class="three-col" id="pillarsGrid"></div>
+    </div>
+
+    <!-- LETTERS TO FUTURE SELF -->
+    <div class="card" style="--accent:#4D96FF">
+      <h2>✉️ Letters To Your Future Self</h2>
+      <div class="field"><textarea id="letterText" rows="3" placeholder="Write something to open later..."></textarea></div>
+      <div class="field"><label>Unlocks on</label><input type="date" id="letterDate"></div>
+      <button class="btn tiny" onclick="sealLetter()">🔒 Seal Letter</button>
+      <div style="margin-top:16px;" id="lettersList"></div>
+    </div>
+
+    <div class="card quote-card">
+      <div class="qtag">Quote of the Day</div>
+      <q id="quoteText">—</q>
+      <div class="auth" id="quoteAuth"></div>
+      <div class="quote-dots" id="quoteDots"></div>
+      <button class="btn secondary tiny" style="margin-top:18px;background:rgba(255,255,255,.12);color:#fff;" onclick="downloadWallpaper()">⬇️ Save as Wallpaper</button>
+    </div>
+
+    <footer>
+      <span class="big-close">You didn't need this reminder. But now you have it.</span>
+      Every number above updates itself, forever, without you doing anything — which is exactly the point. Time doesn't wait for you to notice it.<br><br>
+      Built on statistics and published research, not a medical prediction. Rooted in the "life in weeks" memento mori tradition — Seneca's <em>De Brevitate Vitae</em>, Tim Urban's "Your Life in Weeks."
+    </footer>
+
+  </div>
+</div>
+
+<script>
+const STORE_KEY = "mementoMoriData_v2";
+const CHECKIN_KEY = "mementoMoriCheckins_v1";
+const PILLARS_KEY = "mementoMoriPillars_v1";
+const LETTERS_KEY = "mementoMoriLetters_v1";
+const REFLECTION_KEY = "mementoMoriLastReflection_v1";
+const PROLOGUE_KEY = "mementoMoriPrologueShown_v1";
+const PROLOGUE_CARDS = [
+  { big: "You have exactly one life.", sub: "" },
+  { big: "No one knows how long it is.", sub: "But we can make an honest, educated guess." },
+  { big: "Most people never actually look at the number.", sub: "They just feel busy." },
+  { big: "Let's look.", sub: "Sixty seconds. A few honest answers.", final:true }
+];
+const TIME_KEY = "mementoMoriTimeAccounting_v1";
+const TIME_CATEGORIES = [
+  ["Sleep", 56, "#9B5DE5"], ["Work", 40, "#4D96FF"], ["Family & Friends", 14, "#FF6B6B"],
+  ["Health & Exercise", 4, "#06D6A0"], ["Personal Growth", 4, "#2EC4B6"], ["Leisure & Fun", 14, "#FFC93C"],
+  ["Chores & Errands", 8, "#FF9F1C"], ["Screens & Other", 28, "#C77DFF"]
+];
+const DAY_MS = 86400000;
+const YEAR_DAYS = 365.2425;
+const LIVED_COLOR = "#FF6B6B";
+const DECADE_COLOR_KEY = "mementoMoriDecadeColors_v1";
+const DECADE_COLORS = ["#FF6B6B","#FF9F1C","#FFC93C","#06D6A0","#2EC4B6","#4D96FF","#4361EE","#9B5DE5","#C77DFF","#F15BB5"];
+function getDecadeColors(){ return loadJSON(DECADE_COLOR_KEY, {}); }
+function decadeColor(i){ const custom = getDecadeColors(); return custom[i] || DECADE_COLORS[i % DECADE_COLORS.length]; }
+function hexToRgba(hex, alpha){
+  const h = hex.replace('#','');
+  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+const QUOTES = [
+  ["You could leave life right now. Let that determine what you do and say and think.", "Marcus Aurelius"],
+  ["It is not that we have a short time to live, but that we waste a lot of it.", "Seneca"],
+  ["Waste no more time arguing about what a good man should be. Be one.", "Marcus Aurelius"],
+  ["He who is not satisfied with a little, is satisfied with nothing.", "Epicurus"],
+  ["We suffer more often in imagination than in reality.", "Seneca"],
+  ["No man is free who is not master of himself.", "Epictetus"],
+  ["Remember, you must die. Then decide how to live.", "Memento Mori"],
+  ["The trouble is, you think you have time.", "Buddhist Proverb"],
+  ["It is not death that a man should fear, but he should fear never beginning to live.", "Marcus Aurelius"],
+  ["Every day, remind yourself: I could lose my delusions today.", "Marcus Aurelius"],
+  ["Begin at once to live, and count each separate day as a separate life.", "Seneca"],
+  ["Man is not worried by real problems so much as by his imagined anxieties.", "Epictetus"],
+  ["You act like mortals in all that you fear, and like immortals in all that you desire.", "Seneca"],
+  ["Think of yourself as dead. Now take what's left and live it properly.", "Marcus Aurelius"],
+  ["Let us prepare our minds as if we'd come to the very end of life.", "Seneca"],
+  ["The soul becomes dyed with the color of its thoughts.", "Marcus Aurelius"],
+  ["It's not that we have so little time but that we lose so much.", "Seneca"],
+  ["Dwell on the beauty of life. Watch the stars, and see yourself running with them.", "Marcus Aurelius"],
+  ["While we wait for life, life passes.", "Seneca"],
+  ["Today is your day. You are not guaranteed tomorrow.", "Stoic Maxim"],
+  ["He suffers more than necessary, who suffers before it is necessary.", "Seneca"],
+  ["First say to yourself what you would be; and then do what you have to do.", "Epictetus"],
+  ["Confine yourself to the present.", "Marcus Aurelius"],
+  ["Life is long if you know how to use it.", "Seneca"],
+  ["Wealth consists not in having great possessions, but in having few wants.", "Epictetus"]
+];
+
+let wizardStep = 0;
+let wizardData = { name:"", dob:"", sex:"", smoking:"never", bmi:"normal", activity:"inactive", alcohol:"none", diet:"average", sleep:"mid", expectancy:null };
+let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks";
+
+function $(id){ return document.getElementById(id); }
+function pad(n){ return String(n).padStart(2,"0"); }
+function fmt(n){ return Math.round(n).toLocaleString(); }
+function todayKey(){ return new Date().toISOString().slice(0,10); }
+function loadJSON(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return v===null?fallback:v; }catch(e){ return fallback; } }
+function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
+
+/* ================= WIZARD ================= */
+const TOTAL_STEPS = 10;
+function showStep(i){
+  document.querySelectorAll(".wstep").forEach(el=>el.classList.remove("active"));
+  document.querySelector(`.wstep[data-step="${i}"]`).classList.add("active");
+  $("wizProgress").style.width = Math.round(((i+1)/TOTAL_STEPS)*100) + "%";
+  $("wizStepLabel").textContent = `${i+1} / ${TOTAL_STEPS}`;
+  $("wizBack").style.visibility = i===0 ? "hidden" : "visible";
+  $("wizSkip").style.display = (i>=1 && i<=8) ? "inline-block" : "none";
+  $("wizNext").textContent = i===9 ? "Start My Dashboard →" : "Next →";
+  if(i===9) renderResultStep();
+}
+function pickChip(field, value, btnEl){
+  wizardData[field] = value;
+  const row = btnEl.parentElement;
+  [...row.children].forEach(c=>c.classList.remove("picked"));
+  btnEl.classList.add("picked");
+  setTimeout(wizardNext, 180);
+}
+function wizardNext(){
+  if(wizardStep===0){ wizardData.name = $("q_name").value.trim(); }
+  if(wizardStep===1){
+    if(!$("q_dob").value){ alert("Please enter a date of birth to continue."); return; }
+    wizardData.dob = $("q_dob").value;
+  }
+  if(wizardStep===9){ finishWizard(); return; }
+  wizardStep = Math.min(wizardStep+1, TOTAL_STEPS-1);
+  showStep(wizardStep);
+}
+function wizardBack(){
+  wizardStep = Math.max(wizardStep-1, 0);
+  showStep(wizardStep);
+}
+function wizardSkipToResult(){
+  if(!wizardData.dob){ wizardData.dob = $("q_dob").value; }
+  if(!wizardData.dob){ alert("Please enter a date of birth first."); wizardStep=1; showStep(1); return; }
+  wizardStep = 9;
+  showStep(9);
+}
+
+const BASELINE = { male:76.1, female:81.1, other:78.5 };
+const HR_TABLE = {
+  smoking:  { never:1.0, former:1.3, current:2.75 },
+  bmi:      { underweight:1.82, normal:1.0, overweight:1.13, obese:1.7 },
+  activity: { inactive:1.0, somewhat:0.69, active:0.63, very:0.61 },
+  alcohol:  { none:1.0, moderate:0.97, heavy:1.5 },
+  diet:     { poor:1.0, average:0.9, good:0.8 },
+  sleep:    { short:1.14, mid:1.0, long:1.34 }
+};
+const HR_LABELS = {
+  smoking:"Smoking", bmi:"BMI category", activity:"Activity level",
+  alcohol:"Alcohol", diet:"Diet quality", sleep:"Sleep"
+};
+function calcExpectancy(w){
+  const baseline = BASELINE[w.sex] || BASELINE.other;
+  const factors = ["smoking","bmi","activity","alcohol","diet","sleep"];
+  const hrs = {};
+  let combined = 1;
+  factors.forEach(f=>{ hrs[f] = HR_TABLE[f][w[f]]; combined *= hrs[f]; });
+  combined = Math.min(Math.max(combined, 0.35), 5.0);
+  let est = baseline / combined;
+  est = Math.min(Math.max(est, 40), 110);
+  return { baseline, hrs, combined, est, factors };
+}
+function renderResultStep(){
+  const r = calcExpectancy(wizardData);
+  let rows = `<div class="result-row"><span>Baseline (${wizardData.sex||"average"})</span><span class="mult">${r.baseline.toFixed(1)} yrs</span></div>`;
+  r.factors.forEach(f=>{
+    const v = r.hrs[f];
+    const cls = v>1 ? "up" : (v<1 ? "down" : "");
+    rows += `<div class="result-row"><span>${HR_LABELS[f]}</span><span class="mult ${cls}">${v.toFixed(2)}×</span></div>`;
+  });
+  $("resultTable").innerHTML = rows;
+  $("resultFinal").textContent = r.est.toFixed(1);
+  if(wizardData.expectancy===null || wizardData.expectancy===undefined){
+    $("q_expectancy").value = r.est.toFixed(1);
+  }
+}
+
+function finishWizard(){
+  const exp = parseFloat($("q_expectancy").value);
+  if(!exp || exp<=0){ alert("Please enter a valid lifespan."); return; }
+  wizardData.expectancy = exp;
+  saveJSON(STORE_KEY, wizardData);
+  render(wizardData);
+}
+
+function editInfo(){
+  const d = loadJSON(STORE_KEY, null);
+  if(d){
+    wizardData = Object.assign({}, wizardData, d);
+    $("q_name").value = d.name || "";
+    $("q_dob").value = d.dob || "";
+    if(d.sex) preselectChip("chip_sex", d.sex);
+    preselectChip("chip_smoking", d.smoking);
+    preselectChip("chip_bmi", d.bmi);
+    preselectChip("chip_activity", d.activity);
+    preselectChip("chip_alcohol", d.alcohol);
+    preselectChip("chip_diet", d.diet);
+    preselectChip("chip_sleep", d.sleep);
+  }
+  $("dashboard").style.display = "none";
+  $("wizardCard").style.display = "block";
+  wizardStep = 0;
+  showStep(0);
+}
+function preselectChip(rowId, value){
+  const row = $(rowId); if(!row) return;
+  [...row.children].forEach(c=>c.classList.toggle("picked", c.dataset.v===value));
+}
+
+function resetAll(){
+  if(confirm("Clear all saved info (profile, check-ins, pillars, letters) from this browser?")){
+    localStorage.removeItem(STORE_KEY);
+    localStorage.removeItem(CHECKIN_KEY);
+    localStorage.removeItem(PILLARS_KEY);
+    localStorage.removeItem(LETTERS_KEY);
+    location.reload();
+  }
+}
+
+function shareStats(){
+  const d = loadJSON(STORE_KEY, null); if(!d) return;
+  const s = computeStats(d);
+  const text = `MEMENTO MORI — ${d.name ? d.name+"'s " : ""}Life Dashboard\n`+
+    `${s.pctLived.toFixed(2)}% of an estimated ${d.expectancy}-year life lived.\n`+
+    `Week ${fmt(s.weeksLived)} of ~${fmt(s.totalWeeks)} · ${fmt(s.weeksRemaining)} weeks remaining.\n`+
+    `${fmt(s.ageDays)} days lived · ${fmt(s.daysRemaining)} days (est.) remaining.\n`+
+    `Current streak: ${getStreaks().current} days.\n`+
+    `"${QUOTES[quoteIdx][0]}" — ${QUOTES[quoteIdx][1]}`;
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(()=>alert("Summary copied to clipboard.")).catch(()=>fallbackCopy(text));
+  } else fallbackCopy(text);
+}
+function fallbackCopy(text){
+  const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+  ta.select(); try{ document.execCommand("copy"); alert("Summary copied."); }catch(e){ alert(text); }
+  document.body.removeChild(ta);
+}
+
+/* ================= OPENING REFLECTION SEQUENCE ================= */
+/* A short, personal, one-line-at-a-time sequence — the "carpe diem" ritual real
+   memento mori apps open with — built from the user's own numbers, not stock quotes. */
+let reflCards = [], reflIdx = 0, reflTimer = null, sequenceOnDone = null, sequenceBtnLabel = "Continue →";
+
+function buildReflectionCards(d){
+  const s = computeStats(d);
+  const who = d.name ? d.name : "you";
+  return [
+    { big: `Hi ${who}.`, sub: "Sixty seconds. That's all this takes." },
+    { big: `You've already lived ${s.pctLived.toFixed(1)}% of your estimated life.`, sub: `${fmt(s.weeksLived)} weeks down.` },
+    { big: `${fmt(s.weeksRemaining)} weeks left.`, sub: "If you're lucky, and if the number you gave was right." },
+    { big: `Today is day ${fmt(s.ageDays)}.`, sub: "What's it for?" },
+    { big: `What's stopping you?`, sub: "Be honest. Nothing on that list outlives you." },
+    { big: `This is your one life.`, sub: "Here it is.", final:true }
+  ];
+}
+function playSequence(cards, onDone, btnLabel){
+  reflCards = cards; reflIdx = 0;
+  sequenceOnDone = onDone; sequenceBtnLabel = btnLabel || "Continue →";
+  $("reflectionOverlay").style.display = "flex";
+  renderReflCard();
+  if(reflTimer) clearInterval(reflTimer);
+  reflTimer = setInterval(()=>{
+    if(reflIdx >= reflCards.length-1){ clearInterval(reflTimer); return; }
+    reflIdx++; renderReflCard();
+  }, 2600);
+}
+function renderReflCard(){
+  const c = reflCards[reflIdx];
+  const box = $("reflBox");
+  box.style.opacity = 0;
+  setTimeout(()=>{
+    $("reflBig").textContent = c.big;
+    $("reflSub").textContent = c.sub || "";
+    $("reflDots").innerHTML = reflCards.map((_,i)=>`<span class="${i===reflIdx?'on':''}"></span>`).join("");
+    $("reflEnterBtn").style.display = c.final ? "inline-block" : "none";
+    $("reflEnterBtn").textContent = sequenceBtnLabel;
+    box.style.transition = "opacity .5s ease";
+    box.style.opacity = 1;
+  }, 200);
+}
+function handleReflClick(){
+  if(reflIdx >= reflCards.length-1) return;
+  reflIdx++; renderReflCard();
+}
+function skipReflection(){ if(reflTimer) clearInterval(reflTimer); closeReflection(); }
+function closeReflection(){
+  $("reflectionOverlay").style.display = "none";
+  if(typeof sequenceOnDone === "function") sequenceOnDone();
+}
+function openReflection(d){
+  playSequence(buildReflectionCards(d), ()=>localStorage.setItem(REFLECTION_KEY, todayKey()), "Enter Your Dashboard →");
+}
+function replayReflection(){
+  const d = loadJSON(STORE_KEY, null); if(!d) return;
+  openReflection(d);
+}
+function maybeAutoReflection(d){
+  if(localStorage.getItem(REFLECTION_KEY) !== todayKey()) openReflection(d);
+}
+function playPrologue(){
+  playSequence(PROLOGUE_CARDS, ()=>{ localStorage.setItem(PROLOGUE_KEY, "1"); }, "I'm Ready →");
+}
+
+/* ================= STATS ================= */
+function computeStats(d){
+  const dob = new Date(d.dob + "T00:00:00");
+  const now = new Date();
+  const ageMs = now - dob;
+  const ageDays = Math.floor(ageMs / DAY_MS);
+  const ageYears = ageMs / (YEAR_DAYS*DAY_MS);
+  const totalDays = d.expectancy * YEAR_DAYS;
+  const totalWeeks = Math.round(totalDays/7);
+  const weeksLived = Math.floor(ageDays/7);
+  const weeksRemaining = Math.max(totalWeeks - weeksLived, 0);
+  const pctLived = Math.min(ageDays/totalDays*100, 100);
+  const daysRemaining = Math.max(Math.round(totalDays - ageDays), 0);
+
+  const endDate = new Date(dob);
+  endDate.setFullYear(endDate.getFullYear() + Math.floor(d.expectancy));
+  endDate.setDate(endDate.getDate() + Math.round((d.expectancy % 1) * YEAR_DAYS));
+
+  let nextBday = new Date(now.getFullYear(), dob.getMonth(), dob.getDate());
+  if(nextBday < now) nextBday = new Date(now.getFullYear()+1, dob.getMonth(), dob.getDate());
+
+  const ageMinutes = ageMs/60000;
+  const heartbeats = ageMinutes*80;
+  const breaths = ageMinutes*16;
+  const fullMoons = ageDays/29.53;
+  const mondays = Math.floor(ageDays/7);
+  const weekends = Math.floor(ageDays/7);
+  const monthsLived = Math.floor(ageDays/30.4368);
+
+  let leapYears = 0;
+  for(let y=dob.getFullYear(); y<=now.getFullYear(); y++){
+    if((y%4===0 && y%100!==0) || y%400===0) leapYears++;
+  }
+  return { dob, now, ageMs, ageDays, ageYears, totalDays, totalWeeks, weeksLived, weeksRemaining,
+    pctLived, daysRemaining, endDate, nextBday, heartbeats, breaths, fullMoons, mondays, weekends, leapYears, monthsLived };
+}
+
+function render(d){
+  $("wizardCard").style.display = "none";
+  $("dashboard").style.display = "block";
+  $("whoLine").textContent = (d.name ? d.name + "'s " : "Your") + " Memento Mori — planning around " + d.expectancy + " years";
+
+  buildGrid(gridMode, d);
+  buildMilestones(d);
+  buildTimeSliders(d);
+  buildPillars();
+  buildLetters();
+  refreshCheckinUI();
+  startQuoteCarousel();
+  tick(d);
+  animateReveal(d);
+  if(tickTimer) clearInterval(tickTimer);
+  tickTimer = setInterval(()=>tick(d), 1000);
+  maybeAutoReflection(d);
+}
+function animateReveal(d){
+  const s = computeStats(d);
+  const start = performance.now(), duration = 1200;
+  function step(now){
+    const p = Math.min((now-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    const val = s.pctLived * eased;
+    $("pctLived").textContent = val.toFixed(2) + "%";
+    $("ringPct").textContent = val.toFixed(1) + "%";
+    $("ring").style.setProperty("--p", val);
+    $("progressBar").style.width = val + "%";
+    if(p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+
+  const cards = document.querySelectorAll("#dashboard .card");
+  cards.forEach((c,i)=>{
+    if(c.animate){
+      c.animate(
+        [{opacity:0, transform:"translateY(16px)"},{opacity:1, transform:"translateY(0)"}],
+        {duration:520, delay:Math.min(i*55,650), easing:"cubic-bezier(.22,1,.36,1)", fill:"both"}
+      );
+    }
+  });
+}
+function renderHMS(elId, ms){
+  let totalSec = Math.max(Math.floor(ms/1000), 0);
+  const hh = Math.floor(totalSec/3600); totalSec -= hh*3600;
+  const mm = Math.floor(totalSec/60); totalSec -= mm*60;
+  const ss = totalSec;
+  $(elId).innerHTML = [[hh,"HRS"],[mm,"MIN"],[ss,"SEC"]]
+    .map(([p,u])=>`<div class="cd-box"><div class="n">${pad(p)}</div><div class="u">${u}</div></div>`).join("");
+}
+
+function tick(d){
+  const s = computeStats(d);
+  $("liveClock").textContent = s.now.toLocaleString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
+  $("pctLived").textContent = s.pctLived.toFixed(2) + "%";
+  $("weekLine").textContent = `Week ${fmt(s.weeksLived)} of an estimated ${fmt(s.totalWeeks)} total weeks · ${fmt(s.weeksRemaining)} weeks left`;
+  $("progressBar").style.width = s.pctLived + "%";
+  $("ring").style.setProperty("--p", s.pctLived);
+  $("ringPct").textContent = s.pctLived.toFixed(1) + "%";
+
+  const rem = Math.max(s.endDate - s.now, 0);
+  renderCountdown("lifeCountdown", rem, ["YRS","DAYS","HRS","MIN","SEC"], true);
+  const bRem = Math.max(s.nextBday - s.now, 0);
+  renderCountdown("birthdayCountdown", bRem, ["DAYS","HRS","MIN","SEC"], false);
+
+  const todayEnd = new Date(s.now.getFullYear(), s.now.getMonth(), s.now.getDate()+1, 0,0,0);
+  renderHMS("todayCountdown", todayEnd - s.now);
+
+  $("statGrid").innerHTML = [
+    [fmt(s.ageDays), "Days lived", "#FF6B6B"],
+    [fmt(s.weeksLived), "Weeks lived", "#FFC93C"],
+    [fmt(s.weeksRemaining), "Weeks remaining (est.)", "#2EC4B6"],
+    [s.ageYears.toFixed(2), "Age (years)", "#4D96FF"],
+    [fmt(s.daysRemaining), "Days remaining (est.)", "#9B5DE5"],
+    [(100-s.pctLived).toFixed(2)+"%", "Life remaining (est.)", "#06D6A0"],
+  ].map(([num,lbl,c])=>`<div class="stat-box" style="--c:${c}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
+
+  $("funGrid").innerHTML = [
+    [fmt(s.heartbeats), "Heartbeats so far (est.)", "#FF6B6B"],
+    [fmt(s.breaths), "Breaths taken (est.)", "#FFC93C"],
+    [fmt(s.ageDays), "Sunrises witnessed (est.)", "#2EC4B6"],
+    [fmt(s.mondays), "Mondays survived", "#4D96FF"],
+    [fmt(s.weekends), "Weekends lived", "#9B5DE5"],
+    [fmt(s.fullMoons), "Full moons witnessed (est.)", "#06D6A0"],
+    [s.leapYears, "Leap years lived through", "#FF9F1C"],
+  ].map(([num,lbl,c])=>`<div class="stat-box" style="--c:${c}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
+
+  const seasons = [
+    [25,"🌱","Spring of Life","Growth, learning, foundations being laid."],
+    [50,"☀️","Summer of Life","Momentum, building, peak output."],
+    [75,"🍂","Autumn of Life","Harvest, mastery, refining what matters."],
+    [999,"❄️","Winter of Life","Reflection, wisdom, legacy."]
+  ];
+  const season = seasons.find(sn => s.pctLived < sn[0]);
+  $("seasonIcon").textContent = season[1];
+  $("seasonText").textContent = season[2];
+  $("seasonSub").textContent = season[3];
+
+  const movieMin = (s.pctLived/100*120);
+  const bookPage = Math.round(s.pctLived/100*300);
+  $("movieLine").textContent = `If your life were a 120-minute film, you're at minute ${movieMin.toFixed(0)}.`;
+  $("movieFill").style.width = s.pctLived + "%";
+  $("bookLine").textContent = `If your life were a 300-page book, you're on page ${bookPage}.`;
+  $("bookFill").style.width = s.pctLived + "%";
+
+  updateMilestones(d, s);
+}
+
+function renderCountdown(elId, ms, units, includeYears){
+  const el = $(elId);
+  let totalSec = Math.floor(ms/1000);
+  let parts = [];
+  if(includeYears){
+    const y = Math.floor(totalSec / (YEAR_DAYS*86400));
+    totalSec -= Math.floor(y*YEAR_DAYS*86400);
+    const dd = Math.floor(totalSec / 86400); totalSec -= dd*86400;
+    const hh = Math.floor(totalSec / 3600); totalSec -= hh*3600;
+    const mm = Math.floor(totalSec / 60); totalSec -= mm*60;
+    parts = [y, dd, hh, mm, totalSec];
+  } else {
+    const dd = Math.floor(totalSec / 86400); totalSec -= dd*86400;
+    const hh = Math.floor(totalSec / 3600); totalSec -= hh*3600;
+    const mm = Math.floor(totalSec / 60); totalSec -= mm*60;
+    parts = [dd, hh, mm, totalSec];
+  }
+  el.innerHTML = parts.map((p,i)=>`<div class="cd-box"><div class="n">${pad(p)}</div><div class="u">${units[i]}</div></div>`).join("");
+}
+
+/* ================= GRID VIEWS ================= */
+function setGridMode(mode){
+  gridMode = mode;
+  document.querySelectorAll(".grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.m===mode));
+  const d = loadJSON(STORE_KEY, null);
+  if(d) buildGrid(mode, d);
+}
+function buildGrid(mode, d){
+  const s = computeStats(d);
+  let html = "";
+  if(mode === "weeks"){
+    const rows = Math.ceil(d.expectancy);
+    $("gridTotalBadge").textContent = `${fmt(s.totalWeeks)} weeks total`;
+    for(let r=0; r<rows; r++){
+      const dc = decadeColor(Math.floor(r/10));
+      html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
+      for(let c=0;c<52;c++){
+        const idx = r*52+c;
+        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
+        if(idx < s.weeksLived){ style=`background:${dc}`; }
+        else if(idx===s.weeksLived){ cls+=" current"; style="background:#fff"; }
+        html += `<div class="${cls}" style="${style}" title="Age ${r}, week ${c+1}"></div>`;
+      }
+      html += `</div>`;
+    }
+  } else if(mode === "months"){
+    const rows = Math.ceil(d.expectancy);
+    const totalMonths = Math.round(d.expectancy*12);
+    $("gridTotalBadge").textContent = `${fmt(totalMonths)} months total`;
+    for(let r=0;r<rows;r++){
+      const dc = decadeColor(Math.floor(r/10));
+      html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
+      for(let c=0;c<12;c++){
+        const idx = r*12+c;
+        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
+        if(idx < s.monthsLived){ style=`background:${dc}`; }
+        else if(idx===s.monthsLived){ cls+=" current"; style="background:#fff"; }
+        html += `<div class="${cls}" style="width:14px;height:14px;${style}" title="Age ${r}, month ${c+1}"></div>`;
+      }
+      html += `</div>`;
+    }
+  } else if(mode === "years"){
+    const total = Math.ceil(d.expectancy);
+    const yearsLived = Math.floor(s.ageYears);
+    $("gridTotalBadge").textContent = `${total} years total`;
+    const rows = Math.ceil(total/10);
+    for(let r=0;r<rows;r++){
+      const dc = decadeColor(r);
+      html += `<div class="wk-row"><div class="wk-yr">${r*10}</div>`;
+      for(let c=0;c<10;c++){
+        const idx = r*10+c;
+        if(idx>=total) break;
+        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
+        if(idx < yearsLived){ style=`background:${dc}`; }
+        else if(idx===yearsLived){ cls+=" current"; style="background:#fff"; }
+        html += `<div class="${cls}" style="width:22px;height:22px;border-radius:5px;${style}" title="Year ${idx+1}"></div>`;
+      }
+      html += `</div>`;
+    }
+  } else if(mode === "decades"){
+    const totalDecades = Math.ceil(d.expectancy/10);
+    const decadesLivedExact = s.ageYears/10;
+    const decadesLived = Math.floor(decadesLivedExact);
+    $("gridTotalBadge").textContent = `${totalDecades} decades total`;
+    html += `<div class="wk-row" style="flex-wrap:wrap;max-width:640px;">`;
+    for(let i=0;i<totalDecades;i++){
+      const dc = decadeColor(i);
+      let cls="dec-cell", inner=`<div class="fillbar" style="width:100%;background:${hexToRgba(dc,0.14)}"></div>`;
+      if(i < decadesLived){ inner = `<div class="fillbar" style="width:100%;background:${dc}"></div>`; }
+      else if(i===decadesLived){
+        const pct = Math.round((decadesLivedExact - decadesLived)*100);
+        cls+=" current";
+        inner = `<div class="fillbar" style="width:${pct}%;background:${dc}"></div><div class="fillbar" style="width:100%;background:${hexToRgba(dc,0.14)};z-index:-1;"></div>`;
+      }
+      html += `<div class="${cls}" title="Decade ${i+1} (age ${i*10}-${i*10+10})">${inner}<div style="position:relative;z-index:1;text-align:center;padding-top:14px;font-size:10px;font-weight:800;color:#1A1A2E;">${i*10}s</div></div>`;
+    }
+    html += `</div>`;
+  }
+  $("weeksGrid").innerHTML = html;
+}
+
+/* ================= DECADE COLOR PICKER ================= */
+function togglePicker(){
+  const p = $("decadePicker");
+  const showing = p.style.display !== "none";
+  p.style.display = showing ? "none" : "flex";
+  if(!showing){ const d = loadJSON(STORE_KEY, null); if(d) buildDecadePicker(d); }
+}
+function buildDecadePicker(d){
+  const total = Math.ceil(d.expectancy/10);
+  let html = "";
+  for(let i=0;i<total;i++){
+    html += `<div class="dp-item">
+      <input type="color" value="${decadeColor(i)}" oninput="setDecadeColor(${i}, this.value)">
+      <div class="dp-lbl">${i*10}s</div>
+    </div>`;
+  }
+  $("decadePicker").innerHTML = html;
+}
+function setDecadeColor(i, value){
+  const colors = getDecadeColors();
+  colors[i] = value;
+  saveJSON(DECADE_COLOR_KEY, colors);
+  const d = loadJSON(STORE_KEY, null);
+  if(d) buildGrid(gridMode, d);
+}
+
+/* ================= MILESTONES ================= */
+const MILESTONE_AGES = [1,5,10,13,16,18,21,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,100,105,110];
+function buildMilestones(d){
+  const list = MILESTONE_AGES.filter(a => a <= d.expectancy + 5);
+  $("milestones").innerHTML = list.map(a =>
+    `<div class="ms-item"><div class="ms-dot future" id="ms-${a}">${a}</div><div class="ms-lbl">${a} yrs</div></div>`
+  ).join("");
+}
+function updateMilestones(d, s){
+  const list = MILESTONE_AGES.filter(a => a <= d.expectancy + 5);
+  let next = null;
+  list.forEach(a => {
+    const el = $("ms-"+a); if(!el) return;
+    if(s.ageYears >= a){ el.className = "ms-dot done"; el.textContent = "✓"; }
+    else { if(next===null){ next=a; el.className="ms-dot next"; } else el.className="ms-dot future"; el.textContent=a; }
+  });
+  $("nextMilestoneLine").textContent = next
+    ? `Next milestone: turning ${next} in ~${(next - s.ageYears).toFixed(1)} years`
+    : `You've passed every milestone on this timeline.`;
+}
+
+/* ================= QUOTES ================= */
+function dayOfYear(date){ const start=new Date(date.getFullYear(),0,0); return Math.floor((date-start)/DAY_MS); }
+function startQuoteCarousel(){
+  if(quoteTimer) clearInterval(quoteTimer);
+  quoteIdx = dayOfYear(new Date()) % QUOTES.length;
+  showQuote();
+  quoteTimer = setInterval(()=>{ quoteIdx = (quoteIdx+1) % QUOTES.length; showQuote(); }, 8000);
+}
+function showQuote(){
+  const el = $("quoteText");
+  el.style.opacity = 0;
+  setTimeout(()=>{
+    $("quoteText").textContent = "“" + QUOTES[quoteIdx][0] + "”";
+    $("quoteAuth").textContent = "— " + QUOTES[quoteIdx][1];
+    $("quoteDots").innerHTML = QUOTES.map((_,i)=>`<span class="${i===quoteIdx?'on':''}"></span>`).join("");
+    el.style.transition = "opacity .5s ease";
+    el.style.opacity = 1;
+  }, 250);
+}
+
+/* ================= DAILY CHECK-IN ================= */
+function getCheckins(){ return loadJSON(CHECKIN_KEY, {}); }
+function setCheckin(done){
+  const data = getCheckins();
+  const k = todayKey();
+  data[k] = Object.assign({}, data[k], { done, note: (data[k]&&data[k].note)||"" });
+  saveJSON(CHECKIN_KEY, data);
+  refreshCheckinUI();
+}
+function setMood(color, btnEl){
+  const data = getCheckins();
+  const k = todayKey();
+  data[k] = Object.assign({}, data[k], { mood: color });
+  saveJSON(CHECKIN_KEY, data);
+  [...btnEl.parentElement.children].forEach(c=>c.classList.remove("picked"));
+  btnEl.classList.add("picked");
+  refreshCheckinUI();
+}
+function saveCheckinNote(){
+  const data = getCheckins();
+  const k = todayKey();
+  data[k] = Object.assign({}, data[k], { note: $("checkinNote").value });
+  saveJSON(CHECKIN_KEY, data);
+}
+function getStreaks(){
+  const data = getCheckins();
+  let current = 0, cursor = new Date();
+  while(true){
+    const k = cursor.toISOString().slice(0,10);
+    if(data[k] && data[k].done === true){ current++; cursor.setDate(cursor.getDate()-1); }
+    else break;
+  }
+  const days = Object.keys(data).sort();
+  let best=0, run=0, prev=null;
+  days.forEach(k=>{
+    if(data[k].done===true){
+      if(prev){
+        const d1=new Date(prev), d2=new Date(k);
+        run = ((d2-d1)===DAY_MS) ? run+1 : 1;
+      } else run = 1;
+      best = Math.max(best, run);
+      prev = k;
+    } else { prev=null; run=0; }
+  });
+  best = Math.max(best, current);
+  return { current, best };
+}
+function refreshCheckinUI(){
+  const data = getCheckins();
+  const k = todayKey();
+  const today = data[k];
+  $("ynYes").classList.toggle("picked", today && today.done===true);
+  $("ynNo").classList.toggle("picked", today && today.done===false);
+  $("checkinNote").value = (today && today.note) || "";
+  [...document.querySelectorAll("#moodRow .mood-swatch")].forEach(btn=>{
+    const mc = btn.style.getPropertyValue("--mc").trim();
+    btn.classList.toggle("picked", !!(today && today.mood && today.mood.trim() === mc));
+  });
+  const st = getStreaks();
+  $("streakCurrent").innerHTML = st.current + "<small>Day Streak</small>";
+  $("streakBest").innerHTML = st.best + "<small>Best Streak</small>";
+  let dots = "";
+  for(let i=13;i>=0;i--){
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const key = d.toISOString().slice(0,10);
+    const entry = data[key];
+    let bg = "#eee";
+    if(entry){
+      if(entry.mood) bg = entry.mood;
+      else if(entry.done===true) bg = "linear-gradient(135deg,#06D6A0,#2EC4B6)";
+      else if(entry.done===false) bg = "#d8d8e2";
+    }
+    dots += `<div class="hist-dot" style="background:${bg}" title="${key}"></div>`;
+  }
+  $("histDots").innerHTML = dots;
+}
+
+/* ================= TIME ACCOUNTING ================= */
+function getTimeAccounting(){
+  const saved = loadJSON(TIME_KEY, null);
+  if(saved) return saved;
+  const d = {}; TIME_CATEGORIES.forEach(([name,def])=>d[name]=def); return d;
+}
+function buildTimeSliders(d){
+  const data = getTimeAccounting();
+  const s = computeStats(d);
+  const remainingYears = Math.max(d.expectancy - s.ageYears, 0);
+  let html = "";
+  TIME_CATEGORIES.forEach(([name,,color])=>{
+    const hrs = data[name];
+    const projYears = (hrs/168) * remainingYears;
+    html += `<div class="time-row" style="--tc:${color}">
+      <div class="trow-top"><span>${name}</span><span class="hrs" id="thrs-${cssKey(name)}">${hrs} hrs/wk</span></div>
+      <input type="range" min="0" max="100" step="1" value="${hrs}" oninput="setTimeHours('${name}', this.value)">
+      <div class="tproj" id="tproj-${cssKey(name)}">≈ <b>${projYears.toFixed(1)} years</b> of your remaining estimated life</div>
+    </div>`;
+  });
+  $("timeSliders").innerHTML = html;
+  updateTimeTotal(data);
+}
+function cssKey(name){ return name.replace(/[^a-z0-9]/gi,""); }
+function setTimeHours(name, value){
+  const data = getTimeAccounting();
+  data[name] = parseInt(value,10);
+  saveJSON(TIME_KEY, data);
+  $("thrs-"+cssKey(name)).textContent = value + " hrs/wk";
+  const d = loadJSON(STORE_KEY, null);
+  if(d){
+    const s = computeStats(d);
+    const remainingYears = Math.max(d.expectancy - s.ageYears, 0);
+    const projYears = (value/168) * remainingYears;
+    $("tproj-"+cssKey(name)).innerHTML = `≈ <b>${projYears.toFixed(1)} years</b> of your remaining estimated life`;
+  }
+  updateTimeTotal(data);
+}
+function updateTimeTotal(data){
+  const total = Object.values(data).reduce((a,b)=>a+b,0);
+  const badge = $("timeTotalBadge");
+  badge.textContent = `${total} / 168 hrs`;
+  badge.style.background = total===168 ? "#e6faf3" : "#fff2e6";
+  badge.style.color = total===168 ? "#06D6A0" : "#FF9F1C";
+}
+
+/* ================= WALLPAPER DOWNLOAD ================= */
+function downloadWallpaper(){
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080; canvas.height = 1920;
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0,0,1080,1920);
+  grad.addColorStop(0,"#1A1A2E"); grad.addColorStop(1,"#2D2A4A");
+  ctx.fillStyle = grad; ctx.fillRect(0,0,1080,1920);
+
+  ctx.fillStyle = "#9B5DE5"; ctx.font = "bold 34px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("MEMENTO MORI", 540, 800);
+
+  const [text, author] = QUOTES[quoteIdx];
+  ctx.fillStyle = "#ffffff"; ctx.font = "italic bold 52px sans-serif";
+  wrapText(ctx, "“"+text+"”", 540, 900, 880, 66);
+
+  ctx.fillStyle = "#c9c9e0"; ctx.font = "600 32px sans-serif";
+  ctx.fillText("— " + author, 540, 1250);
+
+  const a = document.createElement("a");
+  a.download = "memento-mori-wallpaper.png";
+  a.href = canvas.toDataURL("image/png");
+  a.click();
+}
+function wrapText(ctx, text, x, y, maxWidth, lineHeight){
+  const words = text.split(" ");
+  let line = "", lines = [];
+  words.forEach(w=>{
+    const test = line + w + " ";
+    if(ctx.measureText(test).width > maxWidth && line !== ""){ lines.push(line); line = w + " "; }
+    else line = test;
+  });
+  lines.push(line);
+  const startY = y - (lines.length-1)*lineHeight/2;
+  lines.forEach((l,i)=>ctx.fillText(l.trim(), x, startY + i*lineHeight));
+}
+
+/* ================= SIX PILLARS ================= */
+const PILLARS = [
+  ["Body","🫀","#FF6B6B"], ["Craft","🛠️","#FFC93C"], ["Mind","🧠","#2EC4B6"],
+  ["Bonds","🤝","#4D96FF"], ["Place","🏡","#9B5DE5"], ["Spirit","🕯️","#06D6A0"]
+];
+function getPillars(){ return loadJSON(PILLARS_KEY, {}); }
+function buildPillars(){
+  const data = getPillars();
+  $("pillarsGrid").innerHTML = PILLARS.map(([name,icon,color])=>{
+    const p = data[name] || { vow:"", target:"", done:false };
+    return `<div class="pillar-card" style="--pc:${color}">
+      <h4>${icon} ${name}</h4>
+      <input type="text" value="${(p.vow||"").replace(/"/g,'&quot;')}" placeholder="Your vow for ${name}..." onchange="savePillar('${name}','vow',this.value)">
+      <input type="date" value="${p.target||""}" onchange="savePillar('${name}','target',this.value)">
+      <label class="done-lbl"><input type="checkbox" ${p.done?"checked":""} onchange="savePillar('${name}','done',this.checked)"> Achieved</label>
+    </div>`;
+  }).join("");
+}
+function savePillar(name, field, value){
+  const data = getPillars();
+  data[name] = Object.assign({vow:"",target:"",done:false}, data[name], {[field]: value});
+  saveJSON(PILLARS_KEY, data);
+}
+
+/* ================= LETTERS ================= */
+function getLetters(){ return loadJSON(LETTERS_KEY, []); }
+function sealLetter(){
+  const text = $("letterText").value.trim();
+  const date = $("letterDate").value;
+  if(!text || !date){ alert("Write a letter and pick an unlock date."); return; }
+  const letters = getLetters();
+  letters.unshift({ id: Date.now(), text, revealDate: date, created: todayKey() });
+  saveJSON(LETTERS_KEY, letters);
+  $("letterText").value=""; $("letterDate").value="";
+  buildLetters();
+}
+function buildLetters(){
+  const letters = getLetters();
+  if(letters.length===0){ $("lettersList").innerHTML = `<div class="sub">No letters yet. Write one above — future you will thank you.</div>`; return; }
+  const today = todayKey();
+  $("lettersList").innerHTML = letters.map(l=>{
+    const locked = l.revealDate > today;
+    if(locked){
+      const days = Math.ceil((new Date(l.revealDate)-new Date(today))/DAY_MS);
+      return `<div class="letter-item locked"><div class="lmeta">🔒 Sealed ${l.created} · Unlocks ${l.revealDate} (${days} day${days===1?'':'s'} left)</div></div>`;
+    }
+    return `<div class="letter-item"><div class="lmeta">✉️ Written ${l.created} · Unlocked ${l.revealDate}</div><div class="ltext">${l.text.replace(/</g,'&lt;')}</div></div>`;
+  }).join("");
+}
+
+/* ================= INIT ================= */
+(function(){
+  setInterval(()=>{ $("liveClock").textContent = new Date().toLocaleString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }, 1000);
+  const existing = loadJSON(STORE_KEY, null);
+  if(existing && existing.dob && existing.expectancy){
+    wizardData = existing;
+    render(existing);
+  } else {
+    showStep(0);
+    if(localStorage.getItem(PROLOGUE_KEY) !== "1") playPrologue();
+  }
+})();
+</script>
+</body>
+</html>
