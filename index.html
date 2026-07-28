@@ -41,6 +41,13 @@
     border: 2px solid #eee0e8; background: #FFFBF5; color: #1A1A2E; font-family: inherit;
   }
   .field input:focus, .field textarea:focus { outline: none; border-color: #FF6B6B; }
+  .dob-row { display:flex; gap:8px; }
+  .dob-row select {
+    flex:1; padding: 12px 8px; font-size: 15px; border-radius: 12px; text-align:center;
+    border: 2px solid #eee0e8; background: #FFFBF5; color: #1A1A2E; font-family: inherit; font-weight:700;
+  }
+  .dob-row select:focus { outline:none; border-color:#FF6B6B; }
+  .dob-row select:nth-child(2) { flex: 1.6; }
 
   .btn {
     display: inline-block; border: none; cursor: pointer; font-weight: 800; font-size: 15px;
@@ -143,7 +150,7 @@
 
   .quote-card { background: linear-gradient(120deg,#1A1A2E,#2D2A4A); color:#fff; border-top:none; text-align:center; padding: 34px 26px; }
   .quote-card .qtag { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#9B5DE5; font-weight:800; margin-bottom:12px; }
-  .quote-card q { font-size: clamp(17px,2.4vw,22px); font-weight: 700; line-height:1.5; display:block; font-style: italic; }
+  .quote-card q { font-size: clamp(17px,2.4vw,22px); font-weight: 700; line-height:1.5; display:block; font-style: italic; min-height: 3.2em; display:flex; align-items:center; justify-content:center; }
   .quote-card .auth { margin-top: 14px; font-size: 12.5px; color:#c9c9e0; font-weight:700; letter-spacing:.4px; }
   .quote-dots { display:flex; gap:6px; justify-content:center; margin-top:16px; flex-wrap:wrap; max-width:280px; margin-left:auto; margin-right:auto; }
   .quote-dots span { width:6px; height:6px; border-radius:50%; background:#4a4a6a; }
@@ -221,13 +228,13 @@
     position:absolute; top:20px; right:20px; background:rgba(255,255,255,.08); color:#c9c9e0; border:none;
     padding:8px 16px; border-radius:999px; font-size:12px; font-weight:800; cursor:pointer; font-family:inherit;
   }
-  #reflBox { max-width: 560px; }
+  #reflBox { max-width: 560px; min-height: 220px; display:flex; flex-direction:column; justify-content:center; }
   #reflBig {
     font-size: clamp(26px,5vw,42px); font-weight:900; color:#fff; line-height:1.25;
     background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6,#9B5DE5);
     -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  #reflSub { font-size: clamp(14px,2.4vw,18px); color:#d8d8ea; font-weight:600; margin-top:14px; }
+  #reflSub { font-size: clamp(14px,2.4vw,18px); color:#d8d8ea; font-weight:600; margin-top:14px; min-height:1.4em; }
   #reflDots { display:flex; gap:7px; justify-content:center; margin-top:34px; }
   #reflDots span { width:7px; height:7px; border-radius:50%; background:#3f3d5c; }
   #reflDots span.on { background:#fff; }
@@ -268,7 +275,14 @@
     <div class="wstep" data-step="1">
       <h3>When did your story start?</h3>
       <p class="hint">The one fact this whole thing is actually built on. Everything after this is optional.</p>
-      <div class="field"><input type="date" id="q_dob"></div>
+      <div class="field">
+        <div class="dob-row">
+          <select id="q_day"></select>
+          <select id="q_month"></select>
+          <select id="q_year"></select>
+        </div>
+        <input type="hidden" id="q_dob">
+      </div>
     </div>
 
     <div class="wstep" data-step="2">
@@ -596,6 +610,34 @@ function todayKey(){ return new Date().toISOString().slice(0,10); }
 function loadJSON(key, fallback){ try{ const v = JSON.parse(localStorage.getItem(key)); return v===null?fallback:v; }catch(e){ return fallback; } }
 function saveJSON(key, val){ localStorage.setItem(key, JSON.stringify(val)); }
 
+/* ================= DOB PICKER (day/month/year dropdowns — jumps straight to
+   a birth year instead of the native date input's month-by-month paging) ================= */
+function populateDobSelects(){
+  const daySel = $("q_day"), monthSel = $("q_month"), yearSel = $("q_year");
+  daySel.innerHTML = Array.from({length:31},(_,i)=>i+1).map(d=>`<option value="${pad(d)}">${d}</option>`).join("");
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  monthSel.innerHTML = months.map((m,i)=>`<option value="${pad(i+1)}">${m}</option>`).join("");
+  const nowY = new Date().getFullYear();
+  let yearsHtml = "";
+  for(let y=nowY; y>=nowY-120; y--){ yearsHtml += `<option value="${y}">${y}</option>`; }
+  yearSel.innerHTML = yearsHtml;
+  yearSel.value = String(nowY - 25); // sane default so it doesn't default to "born this year"
+  [daySel,monthSel,yearSel].forEach(sel=>sel.addEventListener("change", syncDobFromSelects));
+  syncDobFromSelects();
+}
+function syncDobFromSelects(){
+  const y = $("q_year").value, m = $("q_month").value, d = $("q_day").value;
+  if(y && m && d) $("q_dob").value = `${y}-${m}-${d}`;
+}
+function setDobSelects(dobStr){
+  if(!dobStr) return;
+  const [y,m,d] = dobStr.split("-");
+  if(y) $("q_year").value = y;
+  if(m) $("q_month").value = m;
+  if(d) $("q_day").value = String(parseInt(d,10)).padStart(2,"0");
+  $("q_dob").value = dobStr;
+}
+
 /* ================= WIZARD ================= */
 const TOTAL_STEPS = 10;
 function showStep(i){
@@ -688,7 +730,7 @@ function editInfo(){
   if(d){
     wizardData = Object.assign({}, wizardData, d);
     $("q_name").value = d.name || "";
-    $("q_dob").value = d.dob || "";
+    setDobSelects(d.dob);
     if(d.sex) preselectChip("chip_sex", d.sex);
     preselectChip("chip_smoking", d.smoking);
     preselectChip("chip_bmi", d.bmi);
@@ -1125,14 +1167,20 @@ function startQuoteCarousel(){
 }
 function showQuote(){
   const el = $("quoteText");
+  // Same fix as the reflection overlay: fade fully out, THEN swap the text while
+  // invisible, THEN fade in. Previously the text swapped mid-fade and visibly
+  // overlapped the outgoing quote.
+  el.style.transition = "opacity .25s ease";
   el.style.opacity = 0;
   setTimeout(()=>{
     $("quoteText").textContent = "“" + QUOTES[quoteIdx][0] + "”";
     $("quoteAuth").textContent = "— " + QUOTES[quoteIdx][1];
     $("quoteDots").innerHTML = QUOTES.map((_,i)=>`<span class="${i===quoteIdx?'on':''}"></span>`).join("");
-    el.style.transition = "opacity .5s ease";
-    el.style.opacity = 1;
-  }, 250);
+    requestAnimationFrame(()=>{
+      el.style.transition = "opacity .45s ease";
+      el.style.opacity = 1;
+    });
+  }, 260);
 }
 
 /* ================= DAILY CHECK-IN ================= */
@@ -1348,6 +1396,7 @@ function buildLetters(){
 /* ================= INIT ================= */
 (function(){
   setInterval(()=>{ $("liveClock").textContent = new Date().toLocaleString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }, 1000);
+  populateDobSelects();
   const existing = loadJSON(STORE_KEY, null);
   if(existing && existing.dob && existing.expectancy){
     wizardData = existing;
