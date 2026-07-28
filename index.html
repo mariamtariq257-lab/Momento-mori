@@ -216,6 +216,7 @@
     display:none; position:fixed; inset:0; z-index:999; cursor:pointer;
     background: radial-gradient(circle at 50% 30%, #2D2A4A 0%, #1A1A2E 70%);
     align-items:center; justify-content:center; flex-direction:column; padding:24px; text-align:center;
+    opacity:0; transition: opacity .4s ease;
   }
   #reflSkip {
     position:absolute; top:20px; right:20px; background:rgba(255,255,255,.08); color:#c9c9e0; border:none;
@@ -756,36 +757,61 @@ function buildReflectionCards(d){
 function playSequence(cards, onDone, btnLabel){
   reflCards = cards; reflIdx = 0;
   sequenceOnDone = onDone; sequenceBtnLabel = btnLabel || "Continue →";
-  $("reflectionOverlay").style.display = "flex";
-  renderReflCard();
+  const ov = $("reflectionOverlay");
+  ov.style.transition = "none";
+  ov.style.display = "flex";
+  ov.style.opacity = "0";
+  renderReflCard(true);
+  requestAnimationFrame(()=>{
+    ov.style.transition = "opacity .4s ease";
+    ov.style.opacity = "1";
+  });
   if(reflTimer) clearInterval(reflTimer);
   reflTimer = setInterval(()=>{
     if(reflIdx >= reflCards.length-1){ clearInterval(reflTimer); return; }
-    reflIdx++; renderReflCard();
+    reflIdx++; renderReflCard(false);
   }, 2600);
 }
-function renderReflCard(){
+function renderReflCard(instant){
   const c = reflCards[reflIdx];
   const box = $("reflBox");
-  box.style.opacity = 0;
-  setTimeout(()=>{
+  const apply = ()=>{
     $("reflBig").textContent = c.big;
     $("reflSub").textContent = c.sub || "";
     $("reflDots").innerHTML = reflCards.map((_,i)=>`<span class="${i===reflIdx?'on':''}"></span>`).join("");
     $("reflEnterBtn").style.display = c.final ? "inline-block" : "none";
     $("reflEnterBtn").textContent = sequenceBtnLabel;
-    box.style.transition = "opacity .5s ease";
+  };
+  if(instant){
+    box.style.transition = "none";
+    apply();
     box.style.opacity = 1;
-  }, 200);
+    return;
+  }
+  // fade fully out first, THEN swap the text while invisible, THEN fade in —
+  // fixes the old version where text changed mid-fade and caused a visible flash/jump.
+  box.style.transition = "opacity .22s ease";
+  box.style.opacity = 0;
+  setTimeout(()=>{
+    apply();
+    requestAnimationFrame(()=>{
+      box.style.transition = "opacity .45s ease";
+      box.style.opacity = 1;
+    });
+  }, 230);
 }
 function handleReflClick(){
   if(reflIdx >= reflCards.length-1) return;
-  reflIdx++; renderReflCard();
+  reflIdx++; renderReflCard(false);
 }
 function skipReflection(){ if(reflTimer) clearInterval(reflTimer); closeReflection(); }
 function closeReflection(){
-  $("reflectionOverlay").style.display = "none";
-  if(typeof sequenceOnDone === "function") sequenceOnDone();
+  const ov = $("reflectionOverlay");
+  ov.style.opacity = "0";
+  setTimeout(()=>{
+    ov.style.display = "none";
+    if(typeof sequenceOnDone === "function") sequenceOnDone();
+  }, 380);
 }
 function openReflection(d){
   playSequence(buildReflectionCards(d), ()=>localStorage.setItem(REFLECTION_KEY, todayKey()), "Enter Your Dashboard →");
