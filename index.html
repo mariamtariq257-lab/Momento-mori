@@ -130,7 +130,7 @@
   .dec-cell { width:46px; height:46px; border-radius:10px; background:#eee; flex-shrink:0; position:relative; overflow:hidden; }
   .dec-cell .fillbar { position:absolute; left:0; top:0; bottom:0; }
   .dec-cell.current { outline:2px solid #FF3D3D; animation: pulse2 1.4s ease-in-out infinite; }
-  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.6); } }
+  @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(255,61,61,.55); } 50% { box-shadow:0 0 0 5px rgba(255,61,61,0); } }
   @keyframes pulse2 { 0%,100% { box-shadow:0 0 0 0 rgba(255,61,61,.5);} 50% { box-shadow:0 0 0 6px rgba(255,61,61,0);} }
 
   .milestones { display:flex; gap: 14px; overflow-x: auto; padding: 6px 2px 12px; }
@@ -216,7 +216,6 @@
     display:none; position:fixed; inset:0; z-index:999; cursor:pointer;
     background: radial-gradient(circle at 50% 30%, #2D2A4A 0%, #1A1A2E 70%);
     align-items:center; justify-content:center; flex-direction:column; padding:24px; text-align:center;
-    opacity:0; transition: opacity .4s ease;
   }
   #reflSkip {
     position:absolute; top:20px; right:20px; background:rgba(255,255,255,.08); color:#c9c9e0; border:none;
@@ -758,14 +757,12 @@ function playSequence(cards, onDone, btnLabel){
   reflCards = cards; reflIdx = 0;
   sequenceOnDone = onDone; sequenceBtnLabel = btnLabel || "Continue →";
   const ov = $("reflectionOverlay");
-  ov.style.transition = "none";
+  // Overlay itself appears instantly and fully opaque — it must fully hide whatever is
+  // happening on the dashboard underneath (card entrance animations etc). Only the text
+  // inside it crossfades; the overlay container never being semi-transparent is what
+  // stops the two animations from visually bleeding into each other.
   ov.style.display = "flex";
-  ov.style.opacity = "0";
   renderReflCard(true);
-  requestAnimationFrame(()=>{
-    ov.style.transition = "opacity .4s ease";
-    ov.style.opacity = "1";
-  });
   if(reflTimer) clearInterval(reflTimer);
   reflTimer = setInterval(()=>{
     if(reflIdx >= reflCards.length-1){ clearInterval(reflTimer); return; }
@@ -806,12 +803,8 @@ function handleReflClick(){
 }
 function skipReflection(){ if(reflTimer) clearInterval(reflTimer); closeReflection(); }
 function closeReflection(){
-  const ov = $("reflectionOverlay");
-  ov.style.opacity = "0";
-  setTimeout(()=>{
-    ov.style.display = "none";
-    if(typeof sequenceOnDone === "function") sequenceOnDone();
-  }, 380);
+  $("reflectionOverlay").style.display = "none";
+  if(typeof sequenceOnDone === "function") sequenceOnDone();
 }
 function openReflection(d){
   playSequence(buildReflectionCards(d), ()=>localStorage.setItem(REFLECTION_KEY, todayKey()), "Enter Your Dashboard →");
