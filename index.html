@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Memento Mori — Life Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -216,6 +217,22 @@
   .time-row input[type=range] { width:100%; accent-color: var(--tc,#FF6B6B); height:6px; }
   .time-row .tproj { font-size:11.5px; color:#8a8aa0; margin-top:4px; font-weight:700; }
   .time-row .tproj b { color:#1A1A2E; }
+
+  .chart-wrap { position:relative; height:220px; }
+  .chart-empty { text-align:center; padding:30px 0; color:#8a8aa0; font-size:13px; font-weight:600; }
+
+  .journal-search { margin-bottom:14px; }
+  .j-entry { border-bottom:1px solid #f1f1f6; padding:12px 0; }
+  .j-entry:last-child { border-bottom:none; }
+  .j-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+  .j-mood { width:12px; height:12px; border-radius:50%; display:inline-block; flex-shrink:0; }
+  .j-date { font-weight:800; font-size:13px; color:#1A1A2E; }
+  .j-badge { margin-left:auto; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; padding:3px 9px; border-radius:999px; }
+  .j-badge.yes { background:#e6faf3; color:#06D6A0; }
+  .j-badge.no { background:#f1f1f6; color:#8a8aa0; }
+  .j-note { font-size:13.5px; color:#55556a; line-height:1.5; padding-left:20px; }
+  .j-note.empty { color:#b0b0c0; font-style:italic; }
+  .journal-list { max-height:420px; overflow-y:auto; }
 
   footer { text-align:center; margin-top: 30px; font-size: 13px; color:#8a8aa0; line-height:1.8; font-weight:600; }
   footer .big-close { display:block; font-size:17px; font-weight:900; color:#1A1A2E; margin-bottom:8px; }
@@ -521,6 +538,22 @@
         <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
         <div class="dot-history" id="histDots"></div>
       </div>
+    </div>
+
+    <!-- MOOD HISTOGRAM -->
+    <div class="card" style="--accent:#4D96FF">
+      <h2>📈 Mood Trend — how your weeks have actually gone</h2>
+      <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
+      <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here — permanently, not just the last 14 days.</div>
+    </div>
+
+    <!-- SEARCHABLE JOURNAL -->
+    <div class="card" style="--accent:#9B5DE5">
+      <h2>📔 Your Journal — every day you've logged, forever</h2>
+      <div class="field journal-search">
+        <input type="text" id="journalSearch" placeholder="Search your notes... (e.g. 'gym', 'bad day', 'promotion')" oninput="buildJournal(this.value)">
+      </div>
+      <div class="journal-list" id="journalList"></div>
     </div>
 
     <!-- SIX PILLARS / VOWS -->
@@ -1233,6 +1266,7 @@ function saveCheckinNote(){
   const k = todayKey();
   data[k] = Object.assign({}, data[k], { note: $("checkinNote").value });
   saveJSON(CHECKIN_KEY, data);
+  buildJournal($("journalSearch") ? $("journalSearch").value : "");
 }
 function getStreaks(){
   const data = getCheckins();
@@ -1285,6 +1319,8 @@ function refreshCheckinUI(){
     dots += `<div class="hist-dot" style="background:${bg}" title="${key}"></div>`;
   }
   $("histDots").innerHTML = dots;
+  buildMoodChart();
+  buildJournal($("journalSearch") ? $("journalSearch").value : "");
 }
 
 /* ================= TIME ACCOUNTING ================= */
@@ -1368,6 +1404,96 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight){
   lines.push(line);
   const startY = y - (lines.length-1)*lineHeight/2;
   lines.forEach((l,i)=>ctx.fillText(l.trim(), x, startY + i*lineHeight));
+}
+
+/* ================= MOOD HISTOGRAM (permanent trend, not just 14 days) ================= */
+const MOOD_SCALE_MAP = { "#FF6B6B":1, "#8a8aa0":2, "#2EC4B6":3, "#FFC93C":4, "#9B5DE5":5 };
+const MOOD_SCALE_COLORS = ["#FF6B6B","#8a8aa0","#2EC4B6","#FFC93C","#9B5DE5"];
+const MOOD_SCALE_LABELS = ["","Rough","Okay","Good","Great","Unforgettable"];
+function moodScore(color){ return MOOD_SCALE_MAP[color] || null; }
+function mondayOf(dateStr){
+  const d = new Date(dateStr + "T00:00:00");
+  const day = d.getDay();
+  const diff = (day === 0 ? -6 : 1 - day);
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0,10);
+}
+let moodChartInstance = null;
+function buildMoodChart(){
+  const canvas = $("moodChart");
+  if(!canvas) return;
+  if(typeof Chart === "undefined"){
+    canvas.style.display = "none";
+    $("moodChartEmpty").style.display = "block";
+    $("moodChartEmpty").textContent = "Chart library didn't load (offline, or blocked) — your mood data is still being saved.";
+    return;
+  }
+  const data = getCheckins();
+  const buckets = {};
+  Object.entries(data).forEach(([date, v]) => {
+    if(!v || !v.mood) return;
+    const score = moodScore(v.mood);
+    if(score === null) return;
+    const wk = mondayOf(date);
+    (buckets[wk] = buckets[wk] || []).push(score);
+  });
+  const weekKeys = Object.keys(buckets).sort();
+
+  if(weekKeys.length === 0){
+    $("moodChartEmpty").style.display = "block";
+    canvas.style.display = "none";
+    if(moodChartInstance){ moodChartInstance.destroy(); moodChartInstance = null; }
+    return;
+  }
+  $("moodChartEmpty").style.display = "none";
+  canvas.style.display = "block";
+
+  const labels = weekKeys.map(k => new Date(k+"T00:00:00").toLocaleDateString(undefined,{month:'short',day:'numeric'}));
+  const avgs = weekKeys.map(k => { const a = buckets[k]; return a.reduce((x,y)=>x+y,0)/a.length; });
+  const barColors = avgs.map(v => MOOD_SCALE_COLORS[Math.max(0, Math.min(4, Math.round(v)-1))]);
+
+  if(moodChartInstance) moodChartInstance.destroy();
+  moodChartInstance = new Chart(canvas.getContext("2d"), {
+    type: "bar",
+    data: { labels, datasets: [{ data: avgs, backgroundColor: barColors, borderRadius: 6, barPercentage: 0.7, maxBarThickness: 34 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display:false },
+        tooltip: { callbacks: { label: (ctx) => MOOD_SCALE_LABELS[Math.round(ctx.parsed.y)] || "" } }
+      },
+      scales: {
+        y: { min:0, max:5, ticks: { stepSize:1, callback:(v)=>MOOD_SCALE_LABELS[v]||"" }, grid:{ color:"#f1f1f6" } },
+        x: { grid: { display:false }, ticks: { maxRotation:0, autoSkip:true, maxTicksLimit:10 } }
+      }
+    }
+  });
+}
+
+/* ================= SEARCHABLE JOURNAL (every logged day, forever) ================= */
+function buildJournal(searchTerm){
+  searchTerm = (searchTerm || "").toLowerCase().trim();
+  const data = getCheckins();
+  let entries = Object.entries(data).map(([date, v]) => ({ date, ...v }));
+  entries.sort((a,b) => b.date.localeCompare(a.date));
+  if(searchTerm){
+    entries = entries.filter(e => (e.note||"").toLowerCase().includes(searchTerm) || e.date.includes(searchTerm));
+  }
+  const container = $("journalList");
+  if(!container) return;
+  if(entries.length === 0){
+    container.innerHTML = `<div class="sub" style="text-align:center;padding:20px 0;">${
+      searchTerm ? `No entries match "${searchTerm}".` : "No journal entries yet — check in above and they'll show up here, searchable, forever."
+    }</div>`;
+    return;
+  }
+  container.innerHTML = entries.map(e => {
+    const dateLabel = new Date(e.date+"T00:00:00").toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric', year:'numeric'});
+    const moodDot = e.mood ? `<span class="j-mood" style="background:${e.mood}"></span>` : "";
+    const doneBadge = e.done===true ? `<span class="j-badge yes">Counted</span>` : (e.done===false ? `<span class="j-badge no">Didn't count</span>` : "");
+    const noteHtml = e.note ? `<div class="j-note">${e.note.replace(/</g,"&lt;")}</div>` : `<div class="j-note empty">No note.</div>`;
+    return `<div class="j-entry"><div class="j-head">${moodDot}<span class="j-date">${dateLabel}</span>${doneBadge}</div>${noteHtml}</div>`;
+  }).join("");
 }
 
 /* ================= SIX PILLARS ================= */
