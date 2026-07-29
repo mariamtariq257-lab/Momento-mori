@@ -261,6 +261,25 @@
   #reflDots span { width:7px; height:7px; border-radius:50%; background:#3f3d5c; }
   #reflDots span.on { background:#fff; }
   #reflEnterBtn { display:none; margin-top:30px; }
+
+  /* ---------- ADVICE POPUP (fires on mood pick) ---------- */
+  #adviceOverlay {
+    display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;
+    background:rgba(26,26,46,.55); backdrop-filter: blur(3px); padding:20px;
+  }
+  #adviceCard {
+    background:#fff; border-radius:22px; max-width:380px; width:100%; padding:30px 26px; text-align:center;
+    box-shadow:0 20px 60px rgba(0,0,0,.3); transform:scale(.9); opacity:0; transition:transform .28s cubic-bezier(.34,1.56,.64,1), opacity .28s ease;
+  }
+  #adviceOverlay.show #adviceCard { transform:scale(1); opacity:1; }
+  #adviceEmoji { font-size:44px; margin-bottom:10px; }
+  #adviceText { font-size:17px; font-weight:800; color:#1A1A2E; line-height:1.4; }
+  #adviceSub { font-size:12.5px; color:#8a8aa0; font-weight:700; margin-top:10px; text-transform:uppercase; letter-spacing:.04em; }
+  .yesterday-line {
+    font-size:13px; font-weight:700; color:#55556a; background:#f7f7fb; border-radius:12px;
+    padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;
+  }
+  .yesterday-line .yswatch { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -275,6 +294,15 @@
   </div>
 </div>
 
+<div id="adviceOverlay" onclick="closeAdvice(event)">
+  <div id="adviceCard" onclick="event.stopPropagation()">
+    <div id="adviceEmoji">✨</div>
+    <div id="adviceText">—</div>
+    <div id="adviceSub">A thought for tomorrow</div>
+    <button class="btn tiny" style="margin-top:20px;width:100%;" onclick="closeAdvice(event)">Got it →</button>
+  </div>
+</div>
+
 <div class="wrap">
 
   <header>
@@ -283,135 +311,33 @@
     <div class="clock" id="liveClock"></div>
   </header>
 
-  <!-- WIZARD (multi-step onboarding, one question at a time) -->
+  <!-- SETUP (single screen, no quiz — just the facts needed to draw the picture) -->
   <div class="card" id="wizardCard">
-    <div class="wizard-progress"><div class="wizard-bar" id="wizProgress" style="width:10%"></div></div>
-    <div class="wizard-step-label" id="wizStepLabel">1 / 11</div>
+    <h3 style="font-size:22px;font-weight:900;margin-bottom:6px;">How much time do you actually have left?</h3>
+    <p class="hint" style="margin-bottom:20px;">No estimating, no quiz. Just a fixed, round 100-year frame — same for everyone — so you can see exactly how much of it is gone, and how much of what's left you're actually awake for.</p>
 
-    <div class="wstep active" data-step="0">
-      <h3>First, who's asking?</h3>
-      <p class="hint">Just a name — makes the rest of this feel less like a form. Everything you type stays in this browser, nowhere else.</p>
-      <div class="field"><input type="text" id="q_name" placeholder="e.g. Alex"></div>
-    </div>
+    <div class="field"><label>What should we call you? (optional)</label><input type="text" id="q_name" placeholder="e.g. Alex"></div>
 
-    <div class="wstep" data-step="1">
-      <h3>When did your story start?</h3>
-      <p class="hint">The one fact this whole thing is actually built on. Everything after this is optional.</p>
-      <div class="field">
-        <div class="dob-row">
-          <select id="q_day"></select>
-          <select id="q_month"></select>
-          <select id="q_year"></select>
-        </div>
-        <input type="hidden" id="q_dob">
+    <div class="field">
+      <label>Date of birth</label>
+      <div class="dob-row">
+        <select id="q_day"></select>
+        <select id="q_month"></select>
+        <select id="q_year"></select>
       </div>
+      <input type="hidden" id="q_dob">
     </div>
 
-    <div class="wstep" data-step="2">
-      <h3>Where are you writing in from?</h3>
-      <p class="hint">Life expectancy varies a lot by country — this sets a real, country-specific starting point instead of a generic global one.</p>
-      <div class="field">
-        <select id="q_country">
-          <option value="">Prefer not to say / global average</option>
-          <option value="Afghanistan">Afghanistan</option><option value="Albania">Albania</option><option value="Algeria">Algeria</option><option value="American Samoa">American Samoa</option><option value="Andorra">Andorra</option><option value="Angola">Angola</option><option value="Anguilla">Anguilla</option><option value="Antigua and Barbuda">Antigua and Barbuda</option><option value="Argentina">Argentina</option><option value="Armenia">Armenia</option><option value="Aruba">Aruba</option><option value="Australia">Australia</option><option value="Austria">Austria</option><option value="Azerbaijan">Azerbaijan</option><option value="Bahamas">Bahamas</option><option value="Bahrain">Bahrain</option><option value="Bangladesh">Bangladesh</option><option value="Barbados">Barbados</option><option value="Belarus">Belarus</option><option value="Belgium">Belgium</option><option value="Belize">Belize</option><option value="Benin">Benin</option><option value="Bermuda">Bermuda</option><option value="Bhutan">Bhutan</option><option value="Bolivia">Bolivia</option><option value="Bosnia and Herzegovina">Bosnia and Herzegovina</option><option value="Botswana">Botswana</option><option value="Brazil">Brazil</option><option value="British Virgin Islands">British Virgin Islands</option><option value="Brunei">Brunei</option><option value="Bulgaria">Bulgaria</option><option value="Burkina Faso">Burkina Faso</option><option value="Burundi">Burundi</option><option value="Cabo Verde">Cabo Verde</option><option value="Cambodia">Cambodia</option><option value="Cameroon">Cameroon</option><option value="Canada">Canada</option><option value="Caribbean Netherlands">Caribbean Netherlands</option><option value="Cayman Islands">Cayman Islands</option><option value="Central African Republic">Central African Republic</option><option value="Chad">Chad</option><option value="Chile">Chile</option><option value="China">China</option><option value="Colombia">Colombia</option><option value="Comoros">Comoros</option><option value="Congo">Congo</option><option value="Cook Islands">Cook Islands</option><option value="Costa Rica">Costa Rica</option><option value="Croatia">Croatia</option><option value="Cuba">Cuba</option><option value="Curaçao">Curaçao</option><option value="Cyprus">Cyprus</option><option value="Czech Republic">Czech Republic</option><option value="Côte d'Ivoire">Côte d'Ivoire</option><option value="DR Congo">DR Congo</option><option value="Denmark">Denmark</option><option value="Djibouti">Djibouti</option><option value="Dominica">Dominica</option><option value="Dominican Republic">Dominican Republic</option><option value="Ecuador">Ecuador</option><option value="Egypt">Egypt</option><option value="El Salvador">El Salvador</option><option value="Equatorial Guinea">Equatorial Guinea</option><option value="Eritrea">Eritrea</option><option value="Estonia">Estonia</option><option value="Eswatini (Swaziland)">Eswatini (Swaziland)</option><option value="Ethiopia">Ethiopia</option><option value="Faeroe Islands">Faeroe Islands</option><option value="Falkland Islands">Falkland Islands</option><option value="Fiji">Fiji</option><option value="Finland">Finland</option><option value="France">France</option><option value="French Guiana">French Guiana</option><option value="French Polynesia">French Polynesia</option><option value="Gabon">Gabon</option><option value="Gambia">Gambia</option><option value="Georgia">Georgia</option><option value="Germany">Germany</option><option value="Ghana">Ghana</option><option value="Gibraltar">Gibraltar</option><option value="Greece">Greece</option><option value="Greenland">Greenland</option><option value="Grenada">Grenada</option><option value="Guadeloupe">Guadeloupe</option><option value="Guam">Guam</option><option value="Guatemala">Guatemala</option><option value="Guinea">Guinea</option><option value="Guinea-Bissau">Guinea-Bissau</option><option value="Guyana">Guyana</option><option value="Haiti">Haiti</option><option value="Holy See">Holy See</option><option value="Honduras">Honduras</option><option value="Hong Kong">Hong Kong</option><option value="Hungary">Hungary</option><option value="Iceland">Iceland</option><option value="India">India</option><option value="Indonesia">Indonesia</option><option value="Iran">Iran</option><option value="Iraq">Iraq</option><option value="Ireland">Ireland</option><option value="Isle of Man">Isle of Man</option><option value="Israel">Israel</option><option value="Italy">Italy</option><option value="Jamaica">Jamaica</option><option value="Japan">Japan</option><option value="Jordan">Jordan</option><option value="Kazakhstan">Kazakhstan</option><option value="Kenya">Kenya</option><option value="Kiribati">Kiribati</option><option value="Kuwait">Kuwait</option><option value="Kyrgyzstan">Kyrgyzstan</option><option value="Laos">Laos</option><option value="Latvia">Latvia</option><option value="Lebanon">Lebanon</option><option value="Lesotho">Lesotho</option><option value="Liberia">Liberia</option><option value="Libya">Libya</option><option value="Liechtenstein">Liechtenstein</option><option value="Lithuania">Lithuania</option><option value="Luxembourg">Luxembourg</option><option value="Macao">Macao</option><option value="Madagascar">Madagascar</option><option value="Malawi">Malawi</option><option value="Malaysia">Malaysia</option><option value="Maldives">Maldives</option><option value="Mali">Mali</option><option value="Malta">Malta</option><option value="Marshall Islands">Marshall Islands</option><option value="Martinique">Martinique</option><option value="Mauritania">Mauritania</option><option value="Mauritius">Mauritius</option><option value="Mayotte">Mayotte</option><option value="Mexico">Mexico</option><option value="Micronesia">Micronesia</option><option value="Moldova">Moldova</option><option value="Monaco">Monaco</option><option value="Mongolia">Mongolia</option><option value="Montenegro">Montenegro</option><option value="Montserrat">Montserrat</option><option value="Morocco">Morocco</option><option value="Mozambique">Mozambique</option><option value="Myanmar">Myanmar</option><option value="Namibia">Namibia</option><option value="Nauru">Nauru</option><option value="Nepal">Nepal</option><option value="Netherlands">Netherlands</option><option value="New Caledonia">New Caledonia</option><option value="New Zealand">New Zealand</option><option value="Nicaragua">Nicaragua</option><option value="Niger">Niger</option><option value="Nigeria">Nigeria</option><option value="Niue">Niue</option><option value="North Korea">North Korea</option><option value="North Macedonia">North Macedonia</option><option value="Northern Mariana Islands">Northern Mariana Islands</option><option value="Norway">Norway</option><option value="Oman">Oman</option><option value="Pakistan">Pakistan</option><option value="Palau">Palau</option><option value="Panama">Panama</option><option value="Papua New Guinea">Papua New Guinea</option><option value="Paraguay">Paraguay</option><option value="Peru">Peru</option><option value="Philippines">Philippines</option><option value="Poland">Poland</option><option value="Portugal">Portugal</option><option value="Puerto Rico">Puerto Rico</option><option value="Qatar">Qatar</option><option value="Romania">Romania</option><option value="Russia">Russia</option><option value="Rwanda">Rwanda</option><option value="Réunion">Réunion</option><option value="Saint Barthelemy">Saint Barthelemy</option><option value="Saint Helena">Saint Helena</option><option value="Saint Kitts & Nevis">Saint Kitts & Nevis</option><option value="Saint Lucia">Saint Lucia</option><option value="Saint Martin">Saint Martin</option><option value="Saint Pierre & Miquelon">Saint Pierre & Miquelon</option><option value="Samoa">Samoa</option><option value="San Marino">San Marino</option><option value="Sao Tome & Principe">Sao Tome & Principe</option><option value="Saudi Arabia">Saudi Arabia</option><option value="Senegal">Senegal</option><option value="Serbia">Serbia</option><option value="Seychelles">Seychelles</option><option value="Sierra Leone">Sierra Leone</option><option value="Singapore">Singapore</option><option value="Sint Maarten">Sint Maarten</option><option value="Slovakia">Slovakia</option><option value="Slovenia">Slovenia</option><option value="Solomon Islands">Solomon Islands</option><option value="Somalia">Somalia</option><option value="South Africa">South Africa</option><option value="South Korea">South Korea</option><option value="South Sudan">South Sudan</option><option value="Spain">Spain</option><option value="Sri Lanka">Sri Lanka</option><option value="St. Vincent & Grenadines">St. Vincent & Grenadines</option><option value="State of Palestine">State of Palestine</option><option value="Sudan">Sudan</option><option value="Suriname">Suriname</option><option value="Sweden">Sweden</option><option value="Switzerland">Switzerland</option><option value="Syria">Syria</option><option value="Taiwan">Taiwan</option><option value="Tajikistan">Tajikistan</option><option value="Tanzania">Tanzania</option><option value="Thailand">Thailand</option><option value="Timor-Leste">Timor-Leste</option><option value="Togo">Togo</option><option value="Tokelau">Tokelau</option><option value="Tonga">Tonga</option><option value="Trinidad and Tobago">Trinidad and Tobago</option><option value="Tunisia">Tunisia</option><option value="Turkey">Turkey</option><option value="Turkmenistan">Turkmenistan</option><option value="Turks and Caicos">Turks and Caicos</option><option value="Tuvalu">Tuvalu</option><option value="U.S. Virgin Islands">U.S. Virgin Islands</option><option value="Uganda">Uganda</option><option value="Ukraine">Ukraine</option><option value="United Arab Emirates">United Arab Emirates</option><option value="United Kingdom">United Kingdom</option><option value="United States">United States</option><option value="Uruguay">Uruguay</option><option value="Uzbekistan">Uzbekistan</option><option value="Vanuatu">Vanuatu</option><option value="Venezuela">Venezuela</option><option value="Vietnam">Vietnam</option><option value="Wallis & Futuna">Wallis & Futuna</option><option value="Western Sahara">Western Sahara</option><option value="Yemen">Yemen</option><option value="Zambia">Zambia</option><option value="Zimbabwe">Zimbabwe</option>
-        </select>
+    <div class="field">
+      <label>Hours of sleep, typically, per night</label>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <input type="range" id="q_sleep" min="4" max="11" step="0.5" value="8" oninput="$('q_sleepVal').textContent=this.value">
+        <b id="q_sleepVal" style="font-size:18px;min-width:38px;">8</b>
       </div>
+      <p class="hint" style="margin-top:6px;margin-bottom:0;">A third of most lives goes to sleep. We'll subtract it, so "time left" means time you're actually awake for.</p>
     </div>
 
-    <div class="wstep" data-step="3">
-      <h3>Quick one —</h3>
-      <p class="hint">just to set a realistic starting point. Population life-expectancy averages differ by sex; that's the only reason this is here.</p>
-      <div class="chip-row" id="chip_sex">
-        <button class="chip" data-v="female" onclick="pickChip('sex','female',this)">Female</button>
-        <button class="chip" data-v="male" onclick="pickChip('sex','male',this)">Male</button>
-        <button class="chip" data-v="other" onclick="pickChip('sex','other',this)">Prefer not to say</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="4">
-      <h3>Be honest here.</h3>
-      <p class="hint">This one single-handedly moves the number more than anything else on this list.</p>
-      <div class="chip-row" id="chip_smoking">
-        <button class="chip" data-v="never" onclick="pickChip('smoking','never',this)">Never smoked</button>
-        <button class="chip" data-v="former" onclick="pickChip('smoking','former',this)">Former smoker</button>
-        <button class="chip" data-v="current" onclick="pickChip('smoking','current',this)">Current smoker</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="5">
-      <h3>Roughly, where do you sit?</h3>
-      <p class="hint">A ballpark is fine — this isn't a scale.</p>
-      <div class="chip-row" id="chip_bmi">
-        <button class="chip" data-v="underweight" onclick="pickChip('bmi','underweight',this)">Underweight</button>
-        <button class="chip" data-v="normal" onclick="pickChip('bmi','normal',this)">Normal</button>
-        <button class="chip" data-v="overweight" onclick="pickChip('bmi','overweight',this)">Overweight</button>
-        <button class="chip" data-v="obese" onclick="pickChip('bmi','obese',this)">Obese</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="6">
-      <h3>How much do you actually move?</h3>
-      <p class="hint">Weekly moderate-to-vigorous exercise, not intentions.</p>
-      <div class="chip-row" id="chip_activity">
-        <button class="chip" data-v="inactive" onclick="pickChip('activity','inactive',this)">Inactive</button>
-        <button class="chip" data-v="somewhat" onclick="pickChip('activity','somewhat',this)">Somewhat active</button>
-        <button class="chip" data-v="active" onclick="pickChip('activity','active',this)">Active</button>
-        <button class="chip" data-v="very" onclick="pickChip('activity','very',this)">Very active</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="7">
-      <h3>And drinking?</h3>
-      <div class="chip-row" id="chip_alcohol">
-        <button class="chip" data-v="none" onclick="pickChip('alcohol','none',this)">None</button>
-        <button class="chip" data-v="moderate" onclick="pickChip('alcohol','moderate',this)">Moderate</button>
-        <button class="chip" data-v="heavy" onclick="pickChip('alcohol','heavy',this)">Heavy</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="8">
-      <h3>How's the food, generally?</h3>
-      <div class="chip-row" id="chip_diet">
-        <button class="chip" data-v="poor" onclick="pickChip('diet','poor',this)">Poor</button>
-        <button class="chip" data-v="average" onclick="pickChip('diet','average',this)">Average</button>
-        <button class="chip" data-v="good" onclick="pickChip('diet','good',this)">Good</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="9">
-      <h3>Last one before the reveal.</h3>
-      <p class="hint">Typical hours per night.</p>
-      <div class="chip-row" id="chip_sleep">
-        <button class="chip" data-v="short" onclick="pickChip('sleep','short',this)">Under 7 hrs</button>
-        <button class="chip" data-v="mid" onclick="pickChip('sleep','mid',this)">7–8 hrs</button>
-        <button class="chip" data-v="long" onclick="pickChip('sleep','long',this)">9+ hrs</button>
-      </div>
-    </div>
-
-    <div class="wstep" data-step="10">
-      <h3>Here's what the numbers say.</h3>
-      <p class="hint">Baseline life expectancy, adjusted by hazard ratios from published cohort studies (smoking, BMI, activity, alcohol, diet, sleep) — the same method actuarial calculators use. Not a prediction. Yours to override.</p>
-      <div class="result-table" id="resultTable"></div>
-      <div class="result-final">Estimated lifespan: <span id="resultFinal">—</span> years</div>
-      <div class="field"><label>Use this number (edit if you'd like)</label><input type="number" id="q_expectancy" min="1" max="130" step="0.1"></div>
-      <div class="field">
-        <label>Or just pick a round number</label>
-        <div class="chip-row">
-          <button class="chip" onclick="$('q_expectancy').value=60">60</button>
-          <button class="chip" onclick="$('q_expectancy').value=70">70</button>
-          <button class="chip" onclick="$('q_expectancy').value=80">80</button>
-          <button class="chip" onclick="$('q_expectancy').value=90">90</button>
-          <button class="chip" onclick="$('q_expectancy').value=100">100</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="wizard-nav">
-      <button class="btn secondary tiny" id="wizBack" onclick="wizardBack()">← Back</button>
-      <button class="btn secondary tiny" id="wizSkip" onclick="wizardSkipToResult()">Skip lifestyle questions →</button>
-      <div class="spacer"></div>
-      <button class="btn tiny" id="wizNext" onclick="wizardNext()">Next →</button>
-    </div>
+    <button class="btn" style="width:100%;margin-top:8px;" onclick="saveAndRender()">Show Me →</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -436,7 +362,7 @@
     <div class="card" style="--accent:#FF6B6B">
       <div class="hero">
         <div>
-          <div class="big-stat"><span class="pct" id="pctLived">0%</span> of your estimated life is behind you</div>
+          <div class="big-stat"><span class="pct" id="pctLived">0%</span> of your 100-year life is behind you</div>
           <div class="sub" id="weekLine"></div>
           <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
         </div>
@@ -447,8 +373,22 @@
     </div>
 
     <div class="card" style="--accent:#9B5DE5">
-      <h2>⏳ Estimated Time Remaining (ticking live)</h2>
+      <h2>⏳ Time Remaining (ticking live, out of 100 years)</h2>
       <div class="countdown-row" id="lifeCountdown"></div>
+    </div>
+
+    <div class="card" style="--accent:#06D6A0">
+      <h2>😴 Awake Time Remaining</h2>
+      <p class="sub" style="margin-bottom:12px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of life gone before it even starts. This is what's left of the 100 years, minus the sleep.</p>
+      <div class="grid-tabs" id="awakeUnitTabs">
+        <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
+        <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
+        <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
+        <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+      </div>
+      <div class="big-stat" style="margin-top:14px;text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+      <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+      <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
     </div>
 
     <div class="card" style="--accent:#2EC4B6">
@@ -511,13 +451,17 @@
     <!-- TIME ACCOUNTING -->
     <div class="card" style="--accent:#2EC4B6">
       <h2>⏱️ Time Accounting — where your week actually goes <span class="badge" id="timeTotalBadge"></span></h2>
-      <p class="sub" style="margin-bottom:14px;">Drag each slider to roughly how many hours a week go to each. The math translates that straight into years of your remaining estimated life.</p>
+      <p class="sub" style="margin-bottom:14px;">Drag each slider to roughly how many hours a week go to each. The math translates that straight into years of your remaining 100-year life.</p>
       <div id="timeSliders"></div>
     </div>
 
     <!-- DAILY CHECK-IN + STREAK -->
     <div class="card" style="--accent:#06D6A0">
       <h2>✅ Evening Check-In — did today count?</h2>
+      <div class="yesterday-line" id="yesterdayLine" style="display:none;">
+        <span class="yswatch" id="yesterdaySwatch"></span>
+        <span id="yesterdayText"></span>
+      </div>
       <div class="checkin-buttons">
         <button class="yn-btn yes" id="ynYes" onclick="setCheckin(true)">Yes</button>
         <button class="yn-btn no" id="ynNo" onclick="setCheckin(false)">No</button>
@@ -597,9 +541,9 @@ const REFLECTION_KEY = "mementoMoriLastReflection_v1";
 const PROLOGUE_KEY = "mementoMoriPrologueShown_v1";
 const PROLOGUE_CARDS = [
   { big: "You have exactly one life.", sub: "" },
-  { big: "No one knows how long it is.", sub: "But we can make an honest, educated guess." },
+  { big: "No one knows how long it is.", sub: "So we'll just use a round, honest 100 years — same frame for everyone." },
   { big: "Most people never actually look at the number.", sub: "They just feel busy." },
-  { big: "Let's look.", sub: "Sixty seconds. A few honest answers.", final:true }
+  { big: "Let's look.", sub: "Ten seconds. Your name and your birthday.", final:true }
 ];
 const TIME_KEY = "mementoMoriTimeAccounting_v1";
 const TIME_CATEGORIES = [
@@ -648,9 +592,59 @@ const QUOTES = [
   ["Wealth consists not in having great possessions, but in having few wants.", "Epictetus"]
 ];
 
-let wizardStep = 0;
-let wizardData = { name:"", dob:"", country:"", sex:"", smoking:"never", bmi:"normal", activity:"inactive", alcohol:"none", diet:"average", sleep:"mid", expectancy:null };
-let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks";
+/* Mood metadata — emoji/label/advice per swatch color, used for the "yesterday" reference
+   line and the pop-up that fires when today's mood is picked. */
+const MOOD_META = {
+  "#FF6B6B": { emoji:"😞", label:"Rough", advice:[
+    "A rough day doesn't erase a good life. Let it end here — tomorrow starts clean.",
+    "You survived it. That's the whole job today. Rest, and try again tomorrow.",
+    "Bad days are data, not verdicts. Notice what made it hard, then let it go."
+  ]},
+  "#8a8aa0": { emoji:"😐", label:"Okay", advice:[
+    "Okay days are the quiet majority of a life. They still count.",
+    "Not every day needs to be remarkable. Showing up is enough.",
+    "Neutral is underrated — it means nothing broke. Build tomorrow from here."
+  ]},
+  "#2EC4B6": { emoji:"🙂", label:"Good", advice:[
+    "Notice what made today good — do more of exactly that, on purpose.",
+    "A good ordinary day is the actual goal. You just had one.",
+    "Write down one thing from today. Future-you will want the reminder."
+  ]},
+  "#FFC93C": { emoji:"😄", label:"Great", advice:[
+    "Days like this are why you're doing all of it. Let it sink in for a second.",
+    "Great days deserve a pause before you rush to the next thing. Sit with it.",
+    "Bank this feeling. It's proof of what's possible on an ordinary Tuesday."
+  ]},
+  "#9B5DE5": { emoji:"✨", label:"Unforgettable", advice:[
+    "You'll remember this one. Tell someone about it before the details fade.",
+    "This is a page worth dog-earing. Write down why it mattered.",
+    "Days like this are rare on purpose — that's what makes them worth chasing again."
+  ]}
+};
+function adviceFor(color){
+  const meta = MOOD_META[color];
+  if(!meta) return null;
+  return meta.advice[Math.floor(Math.random()*meta.advice.length)];
+}
+function showAdvice(color){
+  const meta = MOOD_META[color]; if(!meta) return;
+  $("adviceEmoji").textContent = meta.emoji;
+  $("adviceText").textContent = adviceFor(color);
+  $("adviceSub").textContent = `Today felt: ${meta.label}`;
+  const ov = $("adviceOverlay");
+  ov.style.display = "flex";
+  requestAnimationFrame(()=>ov.classList.add("show"));
+}
+function closeAdvice(e){
+  if(e) e.stopPropagation();
+  const ov = $("adviceOverlay");
+  ov.classList.remove("show");
+  setTimeout(()=>{ ov.style.display = "none"; }, 200);
+}
+
+const LIFE_YEARS = 100; // fixed, universal horizon — no estimation, same for everyone
+let wizardData = { name:"", dob:"", sleepHours:8, expectancy: LIFE_YEARS };
+let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years";
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -687,99 +681,13 @@ function setDobSelects(dobStr){
   $("q_dob").value = dobStr;
 }
 
-/* ================= WIZARD ================= */
-const TOTAL_STEPS = 11;
-function showStep(i){
-  document.querySelectorAll(".wstep").forEach(el=>el.classList.remove("active"));
-  document.querySelector(`.wstep[data-step="${i}"]`).classList.add("active");
-  $("wizProgress").style.width = Math.round(((i+1)/TOTAL_STEPS)*100) + "%";
-  $("wizStepLabel").textContent = `${i+1} / ${TOTAL_STEPS}`;
-  $("wizBack").style.visibility = i===0 ? "hidden" : "visible";
-  $("wizSkip").style.display = (i>=2 && i<=9) ? "inline-block" : "none";
-  $("wizNext").textContent = i===10 ? "Start My Dashboard →" : "Next →";
-  if(i===10) renderResultStep();
-}
-function pickChip(field, value, btnEl){
-  wizardData[field] = value;
-  const row = btnEl.parentElement;
-  [...row.children].forEach(c=>c.classList.remove("picked"));
-  btnEl.classList.add("picked");
-  setTimeout(wizardNext, 180);
-}
-function wizardNext(){
-  if(wizardStep===0){ wizardData.name = $("q_name").value.trim(); }
-  if(wizardStep===1){
-    if(!$("q_dob").value){ alert("Please enter a date of birth to continue."); return; }
-    wizardData.dob = $("q_dob").value;
-  }
-  if(wizardStep===2){ wizardData.country = $("q_country").value; }
-  if(wizardStep===10){ finishWizard(); return; }
-  wizardStep = Math.min(wizardStep+1, TOTAL_STEPS-1);
-  showStep(wizardStep);
-}
-function wizardBack(){
-  wizardStep = Math.max(wizardStep-1, 0);
-  showStep(wizardStep);
-}
-function wizardSkipToResult(){
-  if(!wizardData.dob){ wizardData.dob = $("q_dob").value; }
-  if(!wizardData.dob){ alert("Please enter a date of birth first."); wizardStep=1; showStep(1); return; }
-  if(!wizardData.country){ wizardData.country = $("q_country").value; }
-  wizardStep = 10;
-  showStep(10);
-}
-
-const COUNTRY_LIFE_EXP = {"Afghanistan":[66.77,68.33,65.15],"Albania":[80.13,81.89,78.33],"Algeria":[76.89,78.34,75.5],"American Samoa":[73.25,76.28,70.55],"Andorra":[84.46,86.48,82.55],"Angola":[65.17,67.73,62.62],"Anguilla":[79.86,83.05,76.67],"Antigua and Barbuda":[78.11,80.75,75.12],"Argentina":[77.83,80.28,75.3],"Armenia":[76.18,79.87,71.95],"Aruba":[76.78,79.19,74.14],"Australia":[84.34,86.07,82.59],"Austria":[82.45,84.69,80.17],"Azerbaijan":[74.89,77.6,72.02],"Bahamas":[75.01,78.59,71.37],"Bahrain":[81.74,82.4,81.21],"Bangladesh":[75.47,77.22,73.82],"Barbados":[76.64,79.05,74.09],"Belarus":[74.97,79.52,70.14],"Belgium":[82.59,84.69,80.46],"Belize":[74.08,77.0,71.4],"Benin":[61.32,62.81,59.84],"Bermuda":[82.83,86.14,79.44],"Bhutan":[73.8,75.84,72.08],"Bolivia":[69.06,71.69,66.56],"Bosnia and Herzegovina":[78.42,81.38,75.09],"Botswana":[69.57,72.17,67.03],"Brazil":[76.37,79.46,73.33],"British Virgin Islands":[77.76,80.46,75.05],"Brunei":[75.83,78.07,73.81],"Bulgaria":[76.13,79.66,72.7],"Burkina Faso":[61.65,63.81,59.45],"Burundi":[64.14,66.24,62.04],"Cabo Verde":[76.56,79.68,73.44],"Cambodia":[71.14,73.72,68.45],"Cameroon":[64.51,66.79,62.3],"Canada":[83.05,85.16,80.94],"Caribbean Netherlands":[77.95,80.6,75.75],"Cayman Islands":[80.9,83.28,78.62],"Central African Republic":[58.15,60.06,55.97],"Chad":[55.58,57.56,53.68],"Chile":[81.72,83.51,79.88],"China":[79.02,81.78,76.38],"Colombia":[78.27,80.92,75.57],"Comoros":[67.48,69.69,65.43],"Congo":[66.42,68.17,64.7],"Cook Islands":[75.85,79.48,72.44],"Costa Rica":[81.38,83.87,78.84],"Croatia":[79.09,82.09,76.01],"Cuba":[78.62,81.0,76.25],"Curaçao":[77.34,81.22,73.06],"Cyprus":[82.15,84.05,80.24],"Czech Republic":[80.25,82.96,77.53],"Côte d'Ivoire":[62.44,64.66,60.47],"DR Congo":[62.39,64.57,60.25],"Denmark":[82.39,84.19,80.57],"Djibouti":[66.61,69.18,64.11],"Dominica":[71.62,75.06,68.63],"Dominican Republic":[74.12,77.35,70.92],"Ecuador":[77.94,80.62,75.28],"Egypt":[72.16,74.41,69.98],"El Salvador":[72.74,76.91,68.23],"Equatorial Guinea":[64.3,66.33,62.59],"Eritrea":[69.4,71.48,67.23],"Estonia":[79.64,83.42,75.57],"Eswatini (Swaziland)":[64.54,67.41,61.58],"Ethiopia":[68.15,71.58,64.88],"Faeroe Islands":[80.81,83.02,78.87],"Falkland Islands":[79.78,81.7,77.81],"Fiji":[67.77,69.9,65.73],"Finland":[82.4,85.02,79.8],"France":[83.7,86.42,80.86],"French Guiana":[77.54,80.44,74.71],"French Polynesia":[84.44,86.86,82.16],"Gabon":[68.88,71.64,66.4],"Gambia":[66.45,68.18,64.71],"Georgia":[74.98,79.49,70.11],"Germany":[81.86,84.11,79.62],"Ghana":[66.08,68.57,63.67],"Gibraltar":[83.9,86.45,81.33],"Greece":[82.39,84.73,79.95],"Greenland":[70.44,72.89,68.42],"Grenada":[75.67,78.78,72.83],"Guadeloupe":[82.56,85.88,78.75],"Guam":[77.81,81.88,74.11],"Guatemala":[73.04,75.37,70.71],"Guinea":[61.23,62.45,59.95],"Guinea-Bissau":[64.59,66.91,62.13],"Guyana":[70.57,74.35,66.84],"Haiti":[65.45,68.83,62.21],"Holy See":[83.41,85.44,81.31],"Honduras":[73.39,76.03,70.8],"Hong Kong":[85.9,88.51,83.22],"Hungary":[77.5,80.61,74.26],"Iceland":[83.3,84.69,81.96],"India":[72.72,74.39,71.16],"Indonesia":[71.58,73.77,69.42],"Iran":[78.25,80.17,76.43],"Iraq":[72.63,74.45,70.67],"Ireland":[82.92,84.86,81.01],"Isle of Man":[81.39,83.4,79.42],"Israel":[82.9,84.94,80.8],"Italy":[84.18,86.13,82.12],"Jamaica":[71.86,74.45,69.27],"Japan":[85.15,88.18,82.13],"Jordan":[78.3,80.6,76.24],"Kazakhstan":[74.81,78.77,70.59],"Kenya":[64.19,66.51,61.96],"Kiribati":[66.86,68.63,64.91],"Kuwait":[80.97,82.3,79.83],"Kyrgyzstan":[72.11,75.7,68.56],"Laos":[69.7,72.05,67.47],"Latvia":[76.63,80.85,72.13],"Lebanon":[78.22,80.11,76.17],"Lesotho":[58.63,61.29,55.85],"Liberia":[62.62,63.97,61.27],"Libya":[75.18,77.83,72.71],"Liechtenstein":[84.06,85.64,82.39],"Lithuania":[76.48,81.05,71.81],"Luxembourg":[82.64,84.17,81.08],"Macao":[83.6,85.64,81.47],"Madagascar":[64.25,66.06,62.51],"Malawi":[67.92,71.14,64.61],"Malaysia":[77.16,79.82,74.81],"Maldives":[81.73,83.34,80.44],"Mali":[61.11,62.62,59.66],"Malta":[83.78,85.63,81.88],"Marshall Islands":[67.32,69.76,65.21],"Martinique":[83.04,85.95,79.81],"Mauritania":[69.16,71.2,67.09],"Mauritius":[75.44,78.65,72.46],"Mayotte":[76.61,78.85,74.63],"Mexico":[75.63,78.35,72.82],"Micronesia":[67.65,71.57,63.9],"Moldova":[71.6,75.93,66.96],"Monaco":[86.73,88.85,84.78],"Mongolia":[72.49,77.11,68.01],"Montenegro":[77.6,80.74,74.31],"Montserrat":[76.66,79.23,74.58],"Morocco":[75.86,78.13,73.71],"Mozambique":[64.14,67.11,60.83],"Myanmar":[67.5,70.8,64.37],"Namibia":[67.81,71.78,63.73],"Nauru":[62.61,64.55,60.68],"Nepal":[71.16,72.7,69.56],"Netherlands":[82.61,84.1,81.09],"New Caledonia":[79.23,81.67,76.83],"New Zealand":[82.52,84.1,80.93],"Nicaragua":[75.43,77.9,72.81],"Niger":[61.88,62.9,60.9],"Nigeria":[54.95,55.3,54.6],"Niue":[70.36,73.17,67.75],"North Korea":[73.98,76.16,71.77],"North Macedonia":[77.81,79.96,75.56],"Northern Mariana Islands":[79.22,81.12,77.59],"Norway":[83.76,85.21,82.31],"Oman":[80.65,82.36,79.17],"Pakistan":[68.06,70.61,65.69],"Palau":[69.61,72.23,67.44],"Panama":[80.15,82.99,77.33],"Papua New Guinea":[66.5,69.47,64.04],"Paraguay":[74.24,77.35,71.25],"Peru":[78.3,80.61,76.02],"Philippines":[70.17,73.23,67.2],"Poland":[79.15,82.74,75.53],"Portugal":[82.89,85.51,80.11],"Puerto Rico":[82.27,85.63,78.72],"Qatar":[82.83,83.72,82.13],"Romania":[76.4,79.95,72.91],"Russia":[73.7,79.46,67.91],"Rwanda":[68.47,70.63,66.12],"Réunion":[83.92,86.68,80.94],"Saint Barthelemy":[84.63,87.14,81.81],"Saint Helena":[77.3,80.97,74.35],"Saint Kitts & Nevis":[72.58,76.44,68.96],"Saint Lucia":[73.15,76.75,69.74],"Saint Martin":[80.85,84.21,77.43],"Saint Pierre & Miquelon":[77.28,81.87,73.34],"Samoa":[72.08,74.14,70.17],"San Marino":[86.03,87.44,84.54],"Sao Tome & Principe":[70.26,74.26,66.73],"Saudi Arabia":[79.4,81.67,77.78],"Senegal":[69.39,71.51,67.42],"Serbia":[77.33,80.5,74.09],"Seychelles":[73.28,76.98,70.37],"Sierra Leone":[62.33,64.09,60.57],"Singapore":[84.13,86.6,81.67],"Sint Maarten":[76.86,79.92,74.17],"Slovakia":[78.81,81.98,75.6],"Slovenia":[82.09,84.69,79.54],"Solomon Islands":[70.98,72.52,69.58],"Somalia":[59.26,61.86,56.77],"South Africa":[66.66,70.16,63.12],"South Korea":[84.64,87.51,81.56],"South Sudan":[57.97,60.98,54.99],"Spain":[84.08,86.71,81.4],"Sri Lanka":[78.03,81.04,74.85],"St. Vincent & Grenadines":[71.65,74.78,69.01],"State of Palestine":[77.42,79.75,74.96],"Sudan":[66.89,70.21,63.78],"Suriname":[74.04,77.26,70.87],"Sweden":[83.73,85.45,82.03],"Switzerland":[84.37,86.2,82.48],"Syria":[73.43,75.91,70.96],"Taiwan":[81.14,84.02,78.32],"Tajikistan":[72.19,74.45,69.89],"Tanzania":[67.63,70.44,64.78],"Thailand":[77.06,81.36,72.92],"Timor-Leste":[68.33,70.14,66.66],"Togo":[63.33,63.61,63.03],"Tokelau":[77.42,79.28,75.33],"Tonga":[73.39,76.84,69.79],"Trinidad and Tobago":[73.89,77.1,70.77],"Tunisia":[77.1,79.68,74.55],"Turkey":[78.38,81.33,75.5],"Turkmenistan":[70.45,73.33,67.24],"Turks and Caicos":[78.5,80.72,76.35],"Tuvalu":[67.56,71.19,64.2],"U.S. Virgin Islands":[76.15,81.73,71.17],"Uganda":[68.92,71.83,65.9],"Ukraine":[75.02,79.67,70.18],"United Arab Emirates":[83.39,84.55,82.56],"United Kingdom":[81.75,83.57,79.89],"United States":[79.76,82.23,77.39],"Uruguay":[78.62,82.29,74.78],"Uzbekistan":[72.78,75.84,69.79],"Vanuatu":[72.02,74.49,69.89],"Venezuela":[73.01,76.99,69.22],"Vietnam":[75.05,79.62,70.42],"Wallis & Futuna":[79.03,80.0,78.05],"Western Sahara":[71.98,74.22,70.24],"Yemen":[69.73,71.88,67.63],"Zambia":[66.88,69.27,64.42],"Zimbabwe":[63.63,65.9,61.01]};
-const BASELINE = { male:76.1, female:81.1, other:78.5 };
-const HR_TABLE = {
-  smoking:  { never:1.0, former:1.3, current:2.75 },
-  bmi:      { underweight:1.82, normal:1.0, overweight:1.13, obese:1.7 },
-  activity: { inactive:1.0, somewhat:0.69, active:0.63, very:0.61 },
-  alcohol:  { none:1.0, moderate:0.97, heavy:1.5 },
-  diet:     { poor:1.0, average:0.9, good:0.8 },
-  sleep:    { short:1.14, mid:1.0, long:1.34 }
-};
-const HR_LABELS = {
-  smoking:"Smoking", bmi:"BMI category", activity:"Activity level",
-  alcohol:"Alcohol", diet:"Diet quality", sleep:"Sleep"
-};
-function countryBaseline(w){
-  const c = COUNTRY_LIFE_EXP[w.country];
-  if(!c) return { baseline: BASELINE[w.sex] || BASELINE.other, source: "global average" };
-  const [both, female, male] = c;
-  const baseline = w.sex === "male" ? male : w.sex === "female" ? female : both;
-  return { baseline, source: w.country };
-}
-function calcExpectancy(w){
-  const { baseline, source } = countryBaseline(w);
-  const factors = ["smoking","bmi","activity","alcohol","diet","sleep"];
-  const hrs = {};
-  let combined = 1;
-  factors.forEach(f=>{ hrs[f] = HR_TABLE[f][w[f]]; combined *= hrs[f]; });
-  combined = Math.min(Math.max(combined, 0.35), 5.0);
-  let est = baseline / combined;
-  est = Math.min(Math.max(est, 40), 110);
-  return { baseline, source, hrs, combined, est, factors };
-}
-function renderResultStep(){
-  const r = calcExpectancy(wizardData);
-  let rows = `<div class="result-row"><span>Baseline (${r.source}, ${wizardData.sex||"average"})</span><span class="mult">${r.baseline.toFixed(1)} yrs</span></div>`;
-  r.factors.forEach(f=>{
-    const v = r.hrs[f];
-    const cls = v>1 ? "up" : (v<1 ? "down" : "");
-    rows += `<div class="result-row"><span>${HR_LABELS[f]}</span><span class="mult ${cls}">${v.toFixed(2)}×</span></div>`;
-  });
-  $("resultTable").innerHTML = rows;
-  $("resultFinal").textContent = r.est.toFixed(1);
-  if(wizardData.expectancy===null || wizardData.expectancy===undefined){
-    $("q_expectancy").value = r.est.toFixed(1);
-  }
-}
-
-function finishWizard(){
-  const exp = parseFloat($("q_expectancy").value);
-  if(!exp || exp<=0){ alert("Please enter a valid lifespan."); return; }
-  wizardData.expectancy = exp;
+/* ================= SETUP (single screen — no quiz, no estimation) ================= */
+function saveAndRender(){
+  if(!$("q_dob").value){ alert("Please enter a date of birth to continue."); return; }
+  wizardData.name = $("q_name").value.trim();
+  wizardData.dob = $("q_dob").value;
+  wizardData.sleepHours = parseFloat($("q_sleep").value) || 8;
+  wizardData.expectancy = LIFE_YEARS;
   saveJSON(STORE_KEY, wizardData);
   render(wizardData);
 }
@@ -790,23 +698,11 @@ function editInfo(){
     wizardData = Object.assign({}, wizardData, d);
     $("q_name").value = d.name || "";
     setDobSelects(d.dob);
-    $("q_country").value = d.country || "";
-    if(d.sex) preselectChip("chip_sex", d.sex);
-    preselectChip("chip_smoking", d.smoking);
-    preselectChip("chip_bmi", d.bmi);
-    preselectChip("chip_activity", d.activity);
-    preselectChip("chip_alcohol", d.alcohol);
-    preselectChip("chip_diet", d.diet);
-    preselectChip("chip_sleep", d.sleep);
+    $("q_sleep").value = d.sleepHours || 8;
+    $("q_sleepVal").textContent = d.sleepHours || 8;
   }
   $("dashboard").style.display = "none";
   $("wizardCard").style.display = "block";
-  wizardStep = 0;
-  showStep(0);
-}
-function preselectChip(rowId, value){
-  const row = $(rowId); if(!row) return;
-  [...row.children].forEach(c=>c.classList.toggle("picked", c.dataset.v===value));
 }
 
 function resetAll(){
@@ -823,7 +719,8 @@ function shareStats(){
   const d = loadJSON(STORE_KEY, null); if(!d) return;
   const s = computeStats(d);
   const text = `MEMENTO MORI — ${d.name ? d.name+"'s " : ""}Life Dashboard\n`+
-    `${s.pctLived.toFixed(2)}% of an estimated ${d.expectancy}-year life lived.\n`+
+    `${s.pctLived.toFixed(2)}% of a ${d.expectancy}-year life lived.\n`+
+    `${formatAwakeTime(s.awakeYearsRemaining,"years")} awake-years left (after subtracting sleep).\n`+
     `Week ${fmt(s.weeksLived)} of ~${fmt(s.totalWeeks)} · ${fmt(s.weeksRemaining)} weeks remaining.\n`+
     `${fmt(s.ageDays)} days lived · ${fmt(s.daysRemaining)} days (est.) remaining.\n`+
     `Current streak: ${getStreaks().current} days.\n`+
@@ -847,9 +744,9 @@ function buildReflectionCards(d){
   const s = computeStats(d);
   const who = d.name ? d.name : "you";
   return [
-    { big: `Hi ${who}.`, sub: "Sixty seconds. That's all this takes." },
-    { big: `You've already lived ${s.pctLived.toFixed(1)}% of your estimated life.`, sub: `${fmt(s.weeksLived)} weeks down.` },
-    { big: `${fmt(s.weeksRemaining)} weeks left.`, sub: "If you're lucky, and if the number you gave was right." },
+    { big: `Hi ${who}.`, sub: "Ten seconds. That's all this takes." },
+    { big: `You've already lived ${s.pctLived.toFixed(1)}% of a 100-year life.`, sub: `${fmt(s.weeksLived)} weeks down.` },
+    { big: `${fmt(s.weeksRemaining)} weeks left — on paper.`, sub: `Only ${formatAwakeTime(s.awakeYearsRemaining,"years")} of those years are actually awake.` },
     { big: `Today is day ${fmt(s.ageDays)}.`, sub: "What's it for?" },
     { big: `What's stopping you?`, sub: "Be honest. Nothing on that list outlives you." },
     { big: `This is your one life.`, sub: "Here it is.", final:true }
@@ -955,14 +852,33 @@ function computeStats(d){
   for(let y=dob.getFullYear(); y<=now.getFullYear(); y++){
     if((y%4===0 && y%100!==0) || y%400===0) leapYears++;
   }
+
+  // Awake-time math: sleep eats a fixed fraction of every day, so "years left" and
+  // "awake years left" are different numbers. We just scale the same 100-year frame down.
+  const sleepHours = (d.sleepHours!==undefined && d.sleepHours!==null) ? d.sleepHours : 8;
+  const awakeFraction = Math.max(0, Math.min(1, (24 - sleepHours) / 24));
+  const awakeYearsTotal = d.expectancy * awakeFraction;
+  const awakeYearsLived = Math.min(ageYears * awakeFraction, awakeYearsTotal);
+  const awakeYearsRemaining = Math.max(awakeYearsTotal - awakeYearsLived, 0);
+
   return { dob, now, ageMs, ageDays, ageYears, totalDays, totalWeeks, weeksLived, weeksRemaining,
-    pctLived, daysRemaining, endDate, nextBday, heartbeats, breaths, fullMoons, mondays, weekends, leapYears, monthsLived };
+    pctLived, daysRemaining, endDate, nextBday, heartbeats, breaths, fullMoons, mondays, weekends, leapYears, monthsLived,
+    sleepHours, awakeFraction, awakeYearsTotal, awakeYearsLived, awakeYearsRemaining };
+}
+function formatAwakeTime(years, unit){
+  let val;
+  if(unit==="decades") val = years/10;
+  else if(unit==="years") val = years;
+  else if(unit==="months") val = years*12;
+  else val = years*52.1775; // weeks
+  const decimals = unit==="decades" ? 2 : (unit==="years" ? 1 : 0);
+  return val.toLocaleString(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:decimals});
 }
 
 function render(d){
   $("wizardCard").style.display = "none";
   $("dashboard").style.display = "block";
-  $("whoLine").textContent = (d.name ? d.name + "'s " : "Your") + " Memento Mori — planning around " + d.expectancy + " years";
+  $("whoLine").textContent = (d.name ? d.name + "'s" : "Your") + " Memento Mori — a fixed " + d.expectancy + "-year life, same as everyone's";
 
   buildGrid(gridMode, d);
   buildMilestones(d);
@@ -1016,7 +932,7 @@ function tick(d){
   $("liveClock").textContent = s.now.toLocaleString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
   $("pctLived").textContent = s.pctLived.toFixed(2) + "%";
-  $("weekLine").textContent = `Week ${fmt(s.weeksLived)} of an estimated ${fmt(s.totalWeeks)} total weeks · ${fmt(s.weeksRemaining)} weeks left`;
+  $("weekLine").textContent = `Week ${fmt(s.weeksLived)} of ${fmt(s.totalWeeks)} total weeks · ${fmt(s.weeksRemaining)} weeks left`;
   $("progressBar").style.width = s.pctLived + "%";
   $("ring").style.setProperty("--p", s.pctLived);
   $("ringPct").textContent = s.pctLived.toFixed(1) + "%";
@@ -1067,6 +983,24 @@ function tick(d){
   $("bookFill").style.width = s.pctLived + "%";
 
   updateMilestones(d, s);
+  renderAwakeTime(s);
+}
+
+function setAwakeUnit(unit){
+  awakeUnit = unit;
+  document.querySelectorAll("#awakeUnitTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.u===unit));
+  const d = loadJSON(STORE_KEY, null);
+  if(d) renderAwakeTime(computeStats(d));
+}
+function renderAwakeTime(s){
+  const unitLabels = { decades:"decades", years:"years", months:"months", weeks:"weeks" };
+  $("sleepHrsLine").textContent = s.sleepHours;
+  $("sleepPctLine").textContent = Math.round((s.sleepHours/24)*100) + "%";
+  $("awakeRemainingVal").textContent = formatAwakeTime(s.awakeYearsRemaining, awakeUnit);
+  $("awakeUnitLabel").textContent = unitLabels[awakeUnit];
+  const awakePct = s.awakeYearsTotal>0 ? Math.min((s.awakeYearsLived/s.awakeYearsTotal)*100,100) : 0;
+  $("awakeProgressBar").style.width = awakePct + "%";
+  $("awakeSubLine").textContent = `${formatAwakeTime(s.awakeYearsLived,"years")} awake-years spent so far, out of ${formatAwakeTime(s.awakeYearsTotal,"years")} total`;
 }
 
 function renderCountdown(elId, ms, units, includeYears){
@@ -1260,6 +1194,7 @@ function setMood(color, btnEl){
   [...btnEl.parentElement.children].forEach(c=>c.classList.remove("picked"));
   btnEl.classList.add("picked");
   refreshCheckinUI();
+  showAdvice(color);
 }
 function saveCheckinNote(){
   const data = getCheckins();
@@ -1321,6 +1256,19 @@ function refreshCheckinUI(){
   $("histDots").innerHTML = dots;
   buildMoodChart();
   buildJournal($("journalSearch") ? $("journalSearch").value : "");
+
+  // "Yesterday was like this" reference, shown above the Yes/No buttons
+  const yKey = new Date(Date.now() - DAY_MS).toISOString().slice(0,10);
+  const yEntry = data[yKey];
+  const yLine = $("yesterdayLine");
+  if(yEntry && yEntry.mood && MOOD_META[yEntry.mood]){
+    const meta = MOOD_META[yEntry.mood];
+    $("yesterdaySwatch").style.background = yEntry.mood;
+    $("yesterdayText").textContent = `Yesterday was: ${meta.emoji} ${meta.label}. How about today?`;
+    yLine.style.display = "flex";
+  } else {
+    yLine.style.display = "none";
+  }
 }
 
 /* ================= TIME ACCOUNTING ================= */
@@ -1340,7 +1288,7 @@ function buildTimeSliders(d){
     html += `<div class="time-row" style="--tc:${color}">
       <div class="trow-top"><span>${name}</span><span class="hrs" id="thrs-${cssKey(name)}">${hrs} hrs/wk</span></div>
       <input type="range" min="0" max="100" step="1" value="${hrs}" oninput="setTimeHours('${name}', this.value)">
-      <div class="tproj" id="tproj-${cssKey(name)}">≈ <b>${projYears.toFixed(1)} years</b> of your remaining estimated life</div>
+      <div class="tproj" id="tproj-${cssKey(name)}">≈ <b>${projYears.toFixed(1)} years</b> of your remaining life</div>
     </div>`;
   });
   $("timeSliders").innerHTML = html;
@@ -1357,7 +1305,7 @@ function setTimeHours(name, value){
     const s = computeStats(d);
     const remainingYears = Math.max(d.expectancy - s.ageYears, 0);
     const projYears = (value/168) * remainingYears;
-    $("tproj-"+cssKey(name)).innerHTML = `≈ <b>${projYears.toFixed(1)} years</b> of your remaining estimated life`;
+    $("tproj-"+cssKey(name)).innerHTML = `≈ <b>${projYears.toFixed(1)} years</b> of your remaining life`;
   }
   updateTimeTotal(data);
 }
@@ -1551,11 +1499,17 @@ function buildLetters(){
   setInterval(()=>{ $("liveClock").textContent = new Date().toLocaleString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit'}); }, 1000);
   populateDobSelects();
   const existing = loadJSON(STORE_KEY, null);
-  if(existing && existing.dob && existing.expectancy){
+  if(existing && existing.dob){
+    // Fixed 100-year model applies to everyone, including anyone with data saved
+    // before this became the model — no re-entering anything, just re-frame it.
+    existing.expectancy = LIFE_YEARS;
+    if(existing.sleepHours===undefined || existing.sleepHours===null) existing.sleepHours = 8;
     wizardData = existing;
-    render(existing);
+    saveJSON(STORE_KEY, wizardData);
+    render(wizardData);
   } else {
-    showStep(0);
+    $("wizardCard").style.display = "block";
+    $("dashboard").style.display = "none";
     if(localStorage.getItem(PROLOGUE_KEY) !== "1") playPrologue();
   }
 })();
