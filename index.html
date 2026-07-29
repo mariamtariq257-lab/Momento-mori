@@ -97,15 +97,29 @@
   .result-final span { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
 
   #dashboard { display: none; }
-  .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
-  .topbar .who { font-size: 18px; font-weight: 800; }
+  .topbar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
   .topbar .actions { display: flex; gap: 8px; flex-wrap:wrap; }
+
+  /* today card — meant to visually pop relative to the rest of the dashboard */
+  .card.today-card { position:relative; overflow:hidden; }
+  .today-badge { background: linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff; animation: todayPulse 1.6s ease-in-out infinite; }
+  @keyframes todayPulse { 0%,100%{ box-shadow:0 0 0 0 rgba(255,107,107,.5);} 50%{ box-shadow:0 0 0 6px rgba(255,107,107,0);} }
+  .bday-compact {
+    display:block; width:fit-content; margin:14px auto 0; text-align:center; font-size:13px; font-weight:800;
+    color:#8a8aa0; background:#FFFBF5; border-radius:999px; padding:8px 16px;
+  }
 
   .hero { display: grid; grid-template-columns: 1fr 220px; gap: 24px; align-items: center; }
   @media (max-width: 700px) { .hero { grid-template-columns: 1fr; } }
   .hero .big-stat { font-size: clamp(30px, 5.4vw, 48px); font-weight: 900; line-height: 1.15; }
   .hero .big-stat span.pct { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero .big-stat .hero-remain { display:block; font-size: 17px; font-weight:700; color:#6b6b80; margin-top:4px; }
+  .hero .big-stat .hero-remain b { color:#06D6A0; font-weight:900; }
   .hero .sub { color: #6b6b80; font-size: 14px; margin-top: 8px; font-weight: 600; }
+  .sleep-cost-line {
+    text-align:center; margin-top:10px; font-size:12.5px; font-weight:700; color:#FF6B6B;
+    background:#FFF3EE; border-radius:10px; padding:9px 12px;
+  }
   .progress-outer { background: #f1f1f6; border-radius: 999px; height: 16px; margin-top: 18px; overflow: hidden; }
   .progress-inner { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6); transition: width .6s ease; }
   .ring-wrap { display:flex; align-items:center; justify-content:center; }
@@ -122,6 +136,18 @@
   .stat-box { background: #FFFBF5; border-radius: 14px; padding: 14px 16px; border-left: 4px solid var(--c,#FF6B6B); }
   .stat-box .num { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
   .stat-box .lbl { font-size: 11.5px; color: #8a8aa0; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+
+  /* fun facts — playful colored tiles instead of the plain stat grid */
+  .fun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; }
+  .fun-tile {
+    border-radius: 16px; padding: 18px 14px; text-align: center; color: #fff;
+    background: var(--fc,#FF6B6B); box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    transition: transform .15s ease;
+  }
+  .fun-tile:hover { transform: translateY(-3px) scale(1.02); }
+  .fun-tile .emoji { font-size: 26px; margin-bottom: 6px; }
+  .fun-tile .num { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .fun-tile .lbl { font-size: 10.5px; font-weight: 700; opacity: .92; margin-top: 3px; text-transform: uppercase; letter-spacing: .3px; }
 
   .countdown-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .cd-box { background: #1A1A2E; color: #fff; border-radius: 14px; padding: 14px 10px; min-width: 78px; text-align: center; }
@@ -344,8 +370,7 @@
   <div id="dashboard">
 
     <div class="topbar">
-      <div class="who" id="whoLine"></div>
-      <div class="actions">
+      <div class="actions" style="margin-left:auto;">
         <button class="btn secondary tiny" onclick="replayReflection()">🌙 Replay Reflection</button>
         <button class="btn secondary tiny" onclick="shareStats()">📋 Copy Summary</button>
         <button class="btn secondary tiny" onclick="editInfo()">✏️ Edit</button>
@@ -353,16 +378,17 @@
       </div>
     </div>
 
-    <div class="card" style="--accent:#FF9F1C">
-      <h2>🔥 Carpe Diem — what's left of today</h2>
+    <div class="card today-card" style="--accent:#FF9F1C">
+      <h2>🔥 Today <span class="badge today-badge">LIVE</span></h2>
       <div class="countdown-row" id="todayCountdown"></div>
       <div class="sub" style="text-align:center;margin-top:10px;">How will you use the time that's left of today? What actually matters gets done now, not "eventually."</div>
+      <div class="bday-compact" id="birthdayCompact">🎂 —</div>
     </div>
 
     <div class="card" style="--accent:#FF6B6B">
       <div class="hero">
         <div>
-          <div class="big-stat"><span class="pct" id="pctLived">0%</span> of your 100-year life is behind you</div>
+          <div class="big-stat"><span class="pct" id="pctLived">0%</span> lived<span class="hero-remain"><b id="pctRemain">0%</b> left</span></div>
           <div class="sub" id="weekLine"></div>
           <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
         </div>
@@ -379,7 +405,7 @@
 
     <div class="card" style="--accent:#06D6A0">
       <h2>😴 Awake Time Remaining</h2>
-      <p class="sub" style="margin-bottom:12px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of life gone before it even starts. This is what's left of the 100 years, minus the sleep.</p>
+      <p class="sub" style="margin-bottom:12px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
       <div class="grid-tabs" id="awakeUnitTabs">
         <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
         <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
@@ -389,6 +415,7 @@
       <div class="big-stat" style="margin-top:14px;text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
       <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
       <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
+      <div class="sleep-cost-line" id="sleepCostLine"></div>
     </div>
 
     <div class="card" style="--accent:#2EC4B6">
@@ -396,9 +423,32 @@
       <div class="stat-grid" id="statGrid"></div>
     </div>
 
-    <div class="card" style="--accent:#FFC93C">
-      <h2>🎂 Countdown To Your Next Birthday</h2>
-      <div class="countdown-row" id="birthdayCountdown"></div>
+    <!-- DAILY CHECK-IN — mood picked here is what colors the life grid below -->
+    <div class="card" style="--accent:#06D6A0">
+      <h2>✅ How Was Today? <span class="badge">colors your life grid below</span></h2>
+      <div class="yesterday-line" id="yesterdayLine" style="display:none;">
+        <span class="yswatch" id="yesterdaySwatch"></span>
+        <span id="yesterdayText"></span>
+      </div>
+      <div class="field" style="margin-bottom:6px;">
+        <div class="chip-row" id="moodRow">
+          <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
+          <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
+          <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
+          <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
+          <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+        </div>
+      </div>
+      <div class="checkin-buttons">
+        <button class="yn-btn yes" id="ynYes" onclick="setCheckin(true)">Today counted</button>
+        <button class="yn-btn no" id="ynNo" onclick="setCheckin(false)">Not really</button>
+      </div>
+      <div class="field" style="margin-bottom:8px;"><textarea id="checkinNote" rows="2" placeholder="Optional note to your future self about today..." onblur="saveCheckinNote()"></textarea></div>
+      <div class="streak-row">
+        <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
+        <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
+        <div class="dot-history" id="histDots"></div>
+      </div>
     </div>
 
     <div class="card" style="--accent:#4D96FF">
@@ -410,15 +460,12 @@
         <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
       </div>
       <div class="grid-legend">
-        <span><i class="swatch" style="background:rgba(255,107,107,.14)"></i>Future — pale preview of that decade's color</span>
-        <span><i class="swatch" style="background:#FF6B6B"></i>Lived — full color</span>
+        <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
+        <span><i class="swatch" style="background:#d8d8e2"></i>Lived, no check-in that day</span>
+        <span><i class="swatch" style="background:#f1f1f6"></i>Future</span>
         <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
       </div>
       <div class="weeks-scroll"><div class="weeks-grid" id="weeksGrid"></div></div>
-      <div style="margin-top:16px;">
-        <button class="btn secondary tiny" onclick="togglePicker()">🎨 Customize each decade's color</button>
-        <div class="decade-picker" id="decadePicker" style="display:none;"></div>
-      </div>
     </div>
 
     <div class="card" style="--accent:#06D6A0">
@@ -427,61 +474,9 @@
       <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
     </div>
 
-    <div class="two-col">
-      <div class="card" style="--accent:#FF9F1C">
-        <h2>🍂 Season of Life</h2>
-        <div class="season-badge" id="seasonIcon">🌱</div>
-        <div id="seasonText" style="font-weight:800;font-size:16px;margin-top:6px;"></div>
-        <div class="sub" id="seasonSub"></div>
-      </div>
-      <div class="card" style="--accent:#C77DFF">
-        <h2>🎬 Perspective</h2>
-        <div id="movieLine" style="font-size:13.5px;font-weight:700;color:#55556a;"></div>
-        <div class="analogy-bar"><div class="analogy-fill" id="movieFill" style="width:0%"></div></div>
-        <div id="bookLine" style="font-size:13.5px;font-weight:700;color:#55556a;margin-top:14px;"></div>
-        <div class="analogy-bar"><div class="analogy-fill" id="bookFill" style="width:0%"></div></div>
-      </div>
-    </div>
-
     <div class="card" style="--accent:#FF6B6B">
       <h2>✨ Fun Facts About Your Time So Far</h2>
-      <div class="stat-grid" id="funGrid"></div>
-    </div>
-
-    <!-- TIME ACCOUNTING -->
-    <div class="card" style="--accent:#2EC4B6">
-      <h2>⏱️ Time Accounting — where your week actually goes <span class="badge" id="timeTotalBadge"></span></h2>
-      <p class="sub" style="margin-bottom:14px;">Drag each slider to roughly how many hours a week go to each. The math translates that straight into years of your remaining 100-year life.</p>
-      <div id="timeSliders"></div>
-    </div>
-
-    <!-- DAILY CHECK-IN + STREAK -->
-    <div class="card" style="--accent:#06D6A0">
-      <h2>✅ Evening Check-In — did today count?</h2>
-      <div class="yesterday-line" id="yesterdayLine" style="display:none;">
-        <span class="yswatch" id="yesterdaySwatch"></span>
-        <span id="yesterdayText"></span>
-      </div>
-      <div class="checkin-buttons">
-        <button class="yn-btn yes" id="ynYes" onclick="setCheckin(true)">Yes</button>
-        <button class="yn-btn no" id="ynNo" onclick="setCheckin(false)">No</button>
-      </div>
-      <div class="field" style="margin-bottom:6px;">
-        <label>How did today actually feel? (colors your history strip below)</label>
-        <div class="chip-row" id="moodRow">
-          <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
-          <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
-          <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
-          <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
-          <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
-        </div>
-      </div>
-      <div class="field" style="margin-bottom:8px;"><textarea id="checkinNote" rows="2" placeholder="Optional note to your future self about today..." onblur="saveCheckinNote()"></textarea></div>
-      <div class="streak-row">
-        <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
-        <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
-        <div class="dot-history" id="histDots"></div>
-      </div>
+      <div class="fun-grid" id="funGrid"></div>
     </div>
 
     <!-- MOOD HISTOGRAM -->
@@ -500,21 +495,6 @@
       <div class="journal-list" id="journalList"></div>
     </div>
 
-    <!-- SIX PILLARS / VOWS -->
-    <div class="card" style="--accent:#9B5DE5">
-      <h2>🧭 The Six Pillars — your vows</h2>
-      <div class="three-col" id="pillarsGrid"></div>
-    </div>
-
-    <!-- LETTERS TO FUTURE SELF -->
-    <div class="card" style="--accent:#4D96FF">
-      <h2>✉️ Letters To Your Future Self</h2>
-      <div class="field"><textarea id="letterText" rows="3" placeholder="Write something to open later..."></textarea></div>
-      <div class="field"><label>Unlocks on</label><input type="date" id="letterDate"></div>
-      <button class="btn tiny" onclick="sealLetter()">🔒 Seal Letter</button>
-      <div style="margin-top:16px;" id="lettersList"></div>
-    </div>
-
     <div class="card quote-card">
       <div class="qtag">Quote of the Day</div>
       <q id="quoteText">—</q>
@@ -525,8 +505,6 @@
 
     <footer>
       <span class="big-close">You didn't need this reminder. But now you have it.</span>
-      Every number above updates itself, forever, without you doing anything — which is exactly the point. Time doesn't wait for you to notice it.<br><br>
-      Built on statistics and published research, not a medical prediction. Rooted in the "life in weeks" memento mori tradition — Seneca's <em>De Brevitate Vitae</em>, Tim Urban's "Your Life in Weeks."
     </footer>
 
   </div>
@@ -545,24 +523,12 @@ const PROLOGUE_CARDS = [
   { big: "Most people never actually look at the number.", sub: "They just feel busy." },
   { big: "Let's look.", sub: "Ten seconds. Your name and your birthday.", final:true }
 ];
-const TIME_KEY = "mementoMoriTimeAccounting_v1";
-const TIME_CATEGORIES = [
-  ["Sleep", 56, "#9B5DE5"], ["Work", 40, "#4D96FF"], ["Family & Friends", 14, "#FF6B6B"],
-  ["Health & Exercise", 4, "#06D6A0"], ["Personal Growth", 4, "#2EC4B6"], ["Leisure & Fun", 14, "#FFC93C"],
-  ["Chores & Errands", 8, "#FF9F1C"], ["Screens & Other", 28, "#C77DFF"]
-];
 const DAY_MS = 86400000;
 const YEAR_DAYS = 365.2425;
-const LIVED_COLOR = "#FF6B6B";
-const DECADE_COLOR_KEY = "mementoMoriDecadeColors_v1";
-const DECADE_COLORS = ["#FF6B6B","#FF9F1C","#FFC93C","#06D6A0","#2EC4B6","#4D96FF","#4361EE","#9B5DE5","#C77DFF","#F15BB5"];
-function getDecadeColors(){ return loadJSON(DECADE_COLOR_KEY, {}); }
-function decadeColor(i){ const custom = getDecadeColors(); return custom[i] || DECADE_COLORS[i % DECADE_COLORS.length]; }
-function hexToRgba(hex, alpha){
-  const h = hex.replace('#','');
-  const r = parseInt(h.slice(0,2),16), g = parseInt(h.slice(2,4),16), b = parseInt(h.slice(4,6),16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
+// The life grid no longer uses fixed per-decade colors — every lived cell is colored by
+// the mood you actually logged for that stretch of time. These are the two fallbacks.
+const GREY_UNLOGGED = "#d8d8e2";   // lived, but no check-in that period
+const FUTURE_COLOR = "#f1f1f6";    // hasn't happened yet
 
 const QUOTES = [
   ["You could leave life right now. Let that determine what you do and say and think.", "Marcus Aurelius"],
@@ -706,9 +672,10 @@ function editInfo(){
 }
 
 function resetAll(){
-  if(confirm("Clear all saved info (profile, check-ins, pillars, letters) from this browser?")){
+  if(confirm("Clear all saved info (profile and check-ins) from this browser?")){
     localStorage.removeItem(STORE_KEY);
     localStorage.removeItem(CHECKIN_KEY);
+    // legacy keys from earlier versions of this dashboard — harmless to clear if present
     localStorage.removeItem(PILLARS_KEY);
     localStorage.removeItem(LETTERS_KEY);
     location.reload();
@@ -738,7 +705,7 @@ function fallbackCopy(text){
 /* ================= OPENING REFLECTION SEQUENCE ================= */
 /* A short, personal, one-line-at-a-time sequence — the "carpe diem" ritual real
    memento mori apps open with — built from the user's own numbers, not stock quotes. */
-let reflCards = [], reflIdx = 0, reflTimer = null, sequenceOnDone = null, sequenceBtnLabel = "Continue →";
+let reflCards = [], reflIdx = 0, reflAutoTimer = null, reflFadeTimer = null, sequenceOnDone = null, sequenceBtnLabel = "Continue →";
 
 function buildReflectionCards(d){
   const s = computeStats(d);
@@ -762,15 +729,30 @@ function playSequence(cards, onDone, btnLabel){
   // stops the two animations from visually bleeding into each other.
   ov.style.display = "flex";
   renderReflCard(true);
-  if(reflTimer) clearInterval(reflTimer);
-  reflTimer = setInterval(()=>{
-    if(reflIdx >= reflCards.length-1){ clearInterval(reflTimer); return; }
-    reflIdx++; renderReflCard(false);
-  }, 2600);
+  scheduleAutoAdvance();
+}
+// Auto-advance is a self-rescheduling timeout (not a fixed interval) so a manual click
+// always cancels and resets it — the old setInterval version could fire independently of
+// a click that just happened, stacking a second text-swap on top of one already in
+// flight, which is what actually caused the "overlapping" quotes.
+function scheduleAutoAdvance(){
+  if(reflAutoTimer) clearTimeout(reflAutoTimer);
+  if(reflIdx >= reflCards.length-1) return;
+  reflAutoTimer = setTimeout(advanceReflCard, 2600);
+}
+function advanceReflCard(){
+  if(reflIdx >= reflCards.length-1) return;
+  reflIdx++;
+  renderReflCard(false);
+  scheduleAutoAdvance();
 }
 function renderReflCard(instant){
   const c = reflCards[reflIdx];
   const box = $("reflBox");
+  // Cancel any fade-swap already in flight before starting a new one — this is what
+  // stops rapid clicks (or a click landing right as the auto-timer fires) from queuing
+  // up two overlapping swaps that both land mid-transition.
+  if(reflFadeTimer){ clearTimeout(reflFadeTimer); reflFadeTimer = null; }
   const apply = ()=>{
     $("reflBig").textContent = c.big;
     $("reflSub").textContent = c.sub || "";
@@ -780,7 +762,9 @@ function renderReflCard(instant){
   };
   if(instant){
     box.style.transition = "none";
+    box.style.opacity = 0;
     apply();
+    void box.offsetWidth; // force a reflow so the browser can't coalesce this into a no-op
     box.style.opacity = 1;
     return;
   }
@@ -788,20 +772,27 @@ function renderReflCard(instant){
   // fixes the old version where text changed mid-fade and caused a visible flash/jump.
   box.style.transition = "opacity .22s ease";
   box.style.opacity = 0;
-  setTimeout(()=>{
+  reflFadeTimer = setTimeout(()=>{
     apply();
     requestAnimationFrame(()=>{
       box.style.transition = "opacity .45s ease";
       box.style.opacity = 1;
     });
-  }, 230);
+    reflFadeTimer = null;
+  }, 260);
 }
 function handleReflClick(){
   if(reflIdx >= reflCards.length-1) return;
-  reflIdx++; renderReflCard(false);
+  advanceReflCard();
 }
-function skipReflection(){ if(reflTimer) clearInterval(reflTimer); closeReflection(); }
+function skipReflection(){
+  if(reflAutoTimer) clearTimeout(reflAutoTimer);
+  if(reflFadeTimer) clearTimeout(reflFadeTimer);
+  closeReflection();
+}
 function closeReflection(){
+  if(reflAutoTimer){ clearTimeout(reflAutoTimer); reflAutoTimer = null; }
+  if(reflFadeTimer){ clearTimeout(reflFadeTimer); reflFadeTimer = null; }
   $("reflectionOverlay").style.display = "none";
   if(typeof sequenceOnDone === "function") sequenceOnDone();
 }
@@ -878,13 +869,9 @@ function formatAwakeTime(years, unit){
 function render(d){
   $("wizardCard").style.display = "none";
   $("dashboard").style.display = "block";
-  $("whoLine").textContent = (d.name ? d.name + "'s" : "Your") + " Memento Mori — a fixed " + d.expectancy + "-year life, same as everyone's";
 
   buildGrid(gridMode, d);
   buildMilestones(d);
-  buildTimeSliders(d);
-  buildPillars();
-  buildLetters();
   refreshCheckinUI();
   startQuoteCarousel();
   tick(d);
@@ -901,6 +888,7 @@ function animateReveal(d){
     const eased = 1 - Math.pow(1-p, 3);
     const val = s.pctLived * eased;
     $("pctLived").textContent = val.toFixed(2) + "%";
+    $("pctRemain").textContent = (100-val).toFixed(2) + "%";
     $("ringPct").textContent = val.toFixed(1) + "%";
     $("ring").style.setProperty("--p", val);
     $("progressBar").style.width = val + "%";
@@ -932,6 +920,7 @@ function tick(d){
   $("liveClock").textContent = s.now.toLocaleString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' });
 
   $("pctLived").textContent = s.pctLived.toFixed(2) + "%";
+  $("pctRemain").textContent = (100-s.pctLived).toFixed(2) + "%";
   $("weekLine").textContent = `Week ${fmt(s.weeksLived)} of ${fmt(s.totalWeeks)} total weeks · ${fmt(s.weeksRemaining)} weeks left`;
   $("progressBar").style.width = s.pctLived + "%";
   $("ring").style.setProperty("--p", s.pctLived);
@@ -939,8 +928,9 @@ function tick(d){
 
   const rem = Math.max(s.endDate - s.now, 0);
   renderCountdown("lifeCountdown", rem, ["YRS","DAYS","HRS","MIN","SEC"], true);
-  const bRem = Math.max(s.nextBday - s.now, 0);
-  renderCountdown("birthdayCountdown", bRem, ["DAYS","HRS","MIN","SEC"], false);
+
+  const bDays = Math.ceil(Math.max(s.nextBday - s.now, 0) / DAY_MS);
+  $("birthdayCompact").textContent = `🎂 Next birthday in ${bDays} day${bDays===1?'':'s'}`;
 
   const todayEnd = new Date(s.now.getFullYear(), s.now.getMonth(), s.now.getDate()+1, 0,0,0);
   renderHMS("todayCountdown", todayEnd - s.now);
@@ -955,32 +945,14 @@ function tick(d){
   ].map(([num,lbl,c])=>`<div class="stat-box" style="--c:${c}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
 
   $("funGrid").innerHTML = [
-    [fmt(s.heartbeats), "Heartbeats so far (est.)", "#FF6B6B"],
-    [fmt(s.breaths), "Breaths taken (est.)", "#FFC93C"],
-    [fmt(s.ageDays), "Sunrises witnessed (est.)", "#2EC4B6"],
-    [fmt(s.mondays), "Mondays survived", "#4D96FF"],
-    [fmt(s.weekends), "Weekends lived", "#9B5DE5"],
-    [fmt(s.fullMoons), "Full moons witnessed (est.)", "#06D6A0"],
-    [s.leapYears, "Leap years lived through", "#FF9F1C"],
-  ].map(([num,lbl,c])=>`<div class="stat-box" style="--c:${c}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
-
-  const seasons = [
-    [25,"🌱","Spring of Life","Growth, learning, foundations being laid."],
-    [50,"☀️","Summer of Life","Momentum, building, peak output."],
-    [75,"🍂","Autumn of Life","Harvest, mastery, refining what matters."],
-    [999,"❄️","Winter of Life","Reflection, wisdom, legacy."]
-  ];
-  const season = seasons.find(sn => s.pctLived < sn[0]);
-  $("seasonIcon").textContent = season[1];
-  $("seasonText").textContent = season[2];
-  $("seasonSub").textContent = season[3];
-
-  const movieMin = (s.pctLived/100*120);
-  const bookPage = Math.round(s.pctLived/100*300);
-  $("movieLine").textContent = `If your life were a 120-minute film, you're at minute ${movieMin.toFixed(0)}.`;
-  $("movieFill").style.width = s.pctLived + "%";
-  $("bookLine").textContent = `If your life were a 300-page book, you're on page ${bookPage}.`;
-  $("bookFill").style.width = s.pctLived + "%";
+    ["❤️", fmt(s.heartbeats), "Heartbeats so far", "#FF6B6B"],
+    ["💨", fmt(s.breaths), "Breaths taken", "#FF9F1C"],
+    ["🌅", fmt(s.ageDays), "Sunrises witnessed", "#2EC4B6"],
+    ["📅", fmt(s.mondays), "Mondays survived", "#4D96FF"],
+    ["🎉", fmt(s.weekends), "Weekends lived", "#9B5DE5"],
+    ["🌕", fmt(s.fullMoons), "Full moons witnessed", "#06D6A0"],
+    ["🐸", s.leapYears, "Leap years lived through", "#FFC93C"],
+  ].map(([emoji,num,lbl,c])=>`<div class="fun-tile" style="--fc:${c}"><div class="emoji">${emoji}</div><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
 
   updateMilestones(d, s);
   renderAwakeTime(s);
@@ -1001,6 +973,14 @@ function renderAwakeTime(s){
   const awakePct = s.awakeYearsTotal>0 ? Math.min((s.awakeYearsLived/s.awakeYearsTotal)*100,100) : 0;
   $("awakeProgressBar").style.width = awakePct + "%";
   $("awakeSubLine").textContent = `${formatAwakeTime(s.awakeYearsLived,"years")} awake-years spent so far, out of ${formatAwakeTime(s.awakeYearsTotal,"years")} total`;
+
+  // Connects the sleep number directly to the stakes: how many of the 100 years sleep
+  // eats over a full lifetime, and what one fewer hour a night would actually buy back.
+  const lifetimeSleepYears = 100 - s.awakeYearsTotal;
+  const oneHourGain = 100 / 24;
+  $("sleepCostLine").textContent =
+    `At ${s.sleepHours} hrs/night, sleep alone claims about ${lifetimeSleepYears.toFixed(1)} of your 100 years. `+
+    `Cut it by just 1 hour and you'd reclaim roughly ${oneHourGain.toFixed(1)} awake-years over a lifetime.`;
 }
 
 function renderCountdown(elId, ms, units, includeYears){
@@ -1030,6 +1010,27 @@ function setGridMode(mode){
   const d = loadJSON(STORE_KEY, null);
   if(d) buildGrid(mode, d);
 }
+// Colors a date range by the average mood logged for it — the grid's color now comes
+// from the daily check-in, not a fixed palette. Returns null (caller falls back to
+// GREY_UNLOGGED) if nothing was logged in that stretch.
+function moodColorForRange(dobStr, startDays, endDays){
+  const dob = new Date(dobStr + "T00:00:00");
+  const start = new Date(dob); start.setDate(start.getDate() + Math.round(startDays));
+  const end = new Date(dob); end.setDate(end.getDate() + Math.round(endDays));
+  const data = getCheckins();
+  let sum = 0, count = 0;
+  for(let cur = new Date(start); cur < end; cur.setDate(cur.getDate()+1)){
+    const entry = data[cur.toISOString().slice(0,10)];
+    if(entry && entry.mood){
+      const score = moodScore(entry.mood);
+      if(score !== null){ sum += score; count++; }
+    }
+  }
+  if(count === 0) return null;
+  const avg = Math.round(sum/count);
+  return MOOD_SCALE_COLORS[Math.max(0, Math.min(4, avg-1))];
+}
+
 function buildGrid(mode, d){
   const s = computeStats(d);
   let html = "";
@@ -1037,12 +1038,11 @@ function buildGrid(mode, d){
     const rows = Math.ceil(d.expectancy);
     $("gridTotalBadge").textContent = `${fmt(s.totalWeeks)} weeks total`;
     for(let r=0; r<rows; r++){
-      const dc = decadeColor(Math.floor(r/10));
       html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
       for(let c=0;c<52;c++){
         const idx = r*52+c;
-        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
-        if(idx < s.weeksLived){ style=`background:${dc}`; }
+        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
+        if(idx < s.weeksLived){ style=`background:${moodColorForRange(d.dob, idx*7, (idx+1)*7) || GREY_UNLOGGED}`; }
         else if(idx===s.weeksLived){ cls+=" current"; style="background:#fff"; }
         html += `<div class="${cls}" style="${style}" title="Age ${r}, week ${c+1}"></div>`;
       }
@@ -1051,14 +1051,14 @@ function buildGrid(mode, d){
   } else if(mode === "months"){
     const rows = Math.ceil(d.expectancy);
     const totalMonths = Math.round(d.expectancy*12);
+    const monthDays = YEAR_DAYS/12;
     $("gridTotalBadge").textContent = `${fmt(totalMonths)} months total`;
     for(let r=0;r<rows;r++){
-      const dc = decadeColor(Math.floor(r/10));
       html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
       for(let c=0;c<12;c++){
         const idx = r*12+c;
-        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
-        if(idx < s.monthsLived){ style=`background:${dc}`; }
+        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
+        if(idx < s.monthsLived){ style=`background:${moodColorForRange(d.dob, idx*monthDays, (idx+1)*monthDays) || GREY_UNLOGGED}`; }
         else if(idx===s.monthsLived){ cls+=" current"; style="background:#fff"; }
         html += `<div class="${cls}" style="width:14px;height:14px;${style}" title="Age ${r}, month ${c+1}"></div>`;
       }
@@ -1070,13 +1070,12 @@ function buildGrid(mode, d){
     $("gridTotalBadge").textContent = `${total} years total`;
     const rows = Math.ceil(total/10);
     for(let r=0;r<rows;r++){
-      const dc = decadeColor(r);
       html += `<div class="wk-row"><div class="wk-yr">${r*10}</div>`;
       for(let c=0;c<10;c++){
         const idx = r*10+c;
         if(idx>=total) break;
-        let cls="wk-cell", style=`background:${hexToRgba(dc,0.14)}`;
-        if(idx < yearsLived){ style=`background:${dc}`; }
+        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
+        if(idx < yearsLived){ style=`background:${moodColorForRange(d.dob, idx*YEAR_DAYS, (idx+1)*YEAR_DAYS) || GREY_UNLOGGED}`; }
         else if(idx===yearsLived){ cls+=" current"; style="background:#fff"; }
         html += `<div class="${cls}" style="width:22px;height:22px;border-radius:5px;${style}" title="Year ${idx+1}"></div>`;
       }
@@ -1089,45 +1088,23 @@ function buildGrid(mode, d){
     $("gridTotalBadge").textContent = `${totalDecades} decades total`;
     html += `<div class="wk-row" style="flex-wrap:wrap;max-width:640px;">`;
     for(let i=0;i<totalDecades;i++){
-      const dc = decadeColor(i);
-      let cls="dec-cell", inner=`<div class="fillbar" style="width:100%;background:${hexToRgba(dc,0.14)}"></div>`;
-      if(i < decadesLived){ inner = `<div class="fillbar" style="width:100%;background:${dc}"></div>`; }
-      else if(i===decadesLived){
+      let cls="dec-cell", inner;
+      if(i < decadesLived){
+        const mc = moodColorForRange(d.dob, i*10*YEAR_DAYS, (i+1)*10*YEAR_DAYS) || GREY_UNLOGGED;
+        inner = `<div class="fillbar" style="width:100%;background:${mc}"></div>`;
+      } else if(i===decadesLived){
         const pct = Math.round((decadesLivedExact - decadesLived)*100);
+        const mc = moodColorForRange(d.dob, i*10*YEAR_DAYS, decadesLivedExact*10*YEAR_DAYS) || GREY_UNLOGGED;
         cls+=" current";
-        inner = `<div class="fillbar" style="width:${pct}%;background:${dc}"></div><div class="fillbar" style="width:100%;background:${hexToRgba(dc,0.14)};z-index:-1;"></div>`;
+        inner = `<div class="fillbar" style="width:${pct}%;background:${mc}"></div><div class="fillbar" style="width:100%;background:${FUTURE_COLOR};z-index:-1;"></div>`;
+      } else {
+        inner = `<div class="fillbar" style="width:100%;background:${FUTURE_COLOR}"></div>`;
       }
       html += `<div class="${cls}" title="Decade ${i+1} (age ${i*10}-${i*10+10})">${inner}<div style="position:relative;z-index:1;text-align:center;padding-top:14px;font-size:10px;font-weight:800;color:#1A1A2E;">${i*10}s</div></div>`;
     }
     html += `</div>`;
   }
   $("weeksGrid").innerHTML = html;
-}
-
-/* ================= DECADE COLOR PICKER ================= */
-function togglePicker(){
-  const p = $("decadePicker");
-  const showing = p.style.display !== "none";
-  p.style.display = showing ? "none" : "flex";
-  if(!showing){ const d = loadJSON(STORE_KEY, null); if(d) buildDecadePicker(d); }
-}
-function buildDecadePicker(d){
-  const total = Math.ceil(d.expectancy/10);
-  let html = "";
-  for(let i=0;i<total;i++){
-    html += `<div class="dp-item">
-      <input type="color" value="${decadeColor(i)}" oninput="setDecadeColor(${i}, this.value)">
-      <div class="dp-lbl">${i*10}s</div>
-    </div>`;
-  }
-  $("decadePicker").innerHTML = html;
-}
-function setDecadeColor(i, value){
-  const colors = getDecadeColors();
-  colors[i] = value;
-  saveJSON(DECADE_COLOR_KEY, colors);
-  const d = loadJSON(STORE_KEY, null);
-  if(d) buildGrid(gridMode, d);
 }
 
 /* ================= MILESTONES ================= */
@@ -1257,6 +1234,11 @@ function refreshCheckinUI(){
   buildMoodChart();
   buildJournal($("journalSearch") ? $("journalSearch").value : "");
 
+  // Today's mood feeds straight into the life grid below — recolor it immediately
+  // instead of waiting for the next full render.
+  const dd = loadJSON(STORE_KEY, null);
+  if(dd) buildGrid(gridMode, dd);
+
   // "Yesterday was like this" reference, shown above the Yes/No buttons
   const yKey = new Date(Date.now() - DAY_MS).toISOString().slice(0,10);
   const yEntry = data[yKey];
@@ -1269,52 +1251,6 @@ function refreshCheckinUI(){
   } else {
     yLine.style.display = "none";
   }
-}
-
-/* ================= TIME ACCOUNTING ================= */
-function getTimeAccounting(){
-  const saved = loadJSON(TIME_KEY, null);
-  if(saved) return saved;
-  const d = {}; TIME_CATEGORIES.forEach(([name,def])=>d[name]=def); return d;
-}
-function buildTimeSliders(d){
-  const data = getTimeAccounting();
-  const s = computeStats(d);
-  const remainingYears = Math.max(d.expectancy - s.ageYears, 0);
-  let html = "";
-  TIME_CATEGORIES.forEach(([name,,color])=>{
-    const hrs = data[name];
-    const projYears = (hrs/168) * remainingYears;
-    html += `<div class="time-row" style="--tc:${color}">
-      <div class="trow-top"><span>${name}</span><span class="hrs" id="thrs-${cssKey(name)}">${hrs} hrs/wk</span></div>
-      <input type="range" min="0" max="100" step="1" value="${hrs}" oninput="setTimeHours('${name}', this.value)">
-      <div class="tproj" id="tproj-${cssKey(name)}">≈ <b>${projYears.toFixed(1)} years</b> of your remaining life</div>
-    </div>`;
-  });
-  $("timeSliders").innerHTML = html;
-  updateTimeTotal(data);
-}
-function cssKey(name){ return name.replace(/[^a-z0-9]/gi,""); }
-function setTimeHours(name, value){
-  const data = getTimeAccounting();
-  data[name] = parseInt(value,10);
-  saveJSON(TIME_KEY, data);
-  $("thrs-"+cssKey(name)).textContent = value + " hrs/wk";
-  const d = loadJSON(STORE_KEY, null);
-  if(d){
-    const s = computeStats(d);
-    const remainingYears = Math.max(d.expectancy - s.ageYears, 0);
-    const projYears = (value/168) * remainingYears;
-    $("tproj-"+cssKey(name)).innerHTML = `≈ <b>${projYears.toFixed(1)} years</b> of your remaining life`;
-  }
-  updateTimeTotal(data);
-}
-function updateTimeTotal(data){
-  const total = Object.values(data).reduce((a,b)=>a+b,0);
-  const badge = $("timeTotalBadge");
-  badge.textContent = `${total} / 168 hrs`;
-  badge.style.background = total===168 ? "#e6faf3" : "#fff2e6";
-  badge.style.color = total===168 ? "#06D6A0" : "#FF9F1C";
 }
 
 /* ================= WALLPAPER DOWNLOAD ================= */
@@ -1441,56 +1377,6 @@ function buildJournal(searchTerm){
     const doneBadge = e.done===true ? `<span class="j-badge yes">Counted</span>` : (e.done===false ? `<span class="j-badge no">Didn't count</span>` : "");
     const noteHtml = e.note ? `<div class="j-note">${e.note.replace(/</g,"&lt;")}</div>` : `<div class="j-note empty">No note.</div>`;
     return `<div class="j-entry"><div class="j-head">${moodDot}<span class="j-date">${dateLabel}</span>${doneBadge}</div>${noteHtml}</div>`;
-  }).join("");
-}
-
-/* ================= SIX PILLARS ================= */
-const PILLARS = [
-  ["Body","🫀","#FF6B6B"], ["Craft","🛠️","#FFC93C"], ["Mind","🧠","#2EC4B6"],
-  ["Bonds","🤝","#4D96FF"], ["Place","🏡","#9B5DE5"], ["Spirit","🕯️","#06D6A0"]
-];
-function getPillars(){ return loadJSON(PILLARS_KEY, {}); }
-function buildPillars(){
-  const data = getPillars();
-  $("pillarsGrid").innerHTML = PILLARS.map(([name,icon,color])=>{
-    const p = data[name] || { vow:"", target:"", done:false };
-    return `<div class="pillar-card" style="--pc:${color}">
-      <h4>${icon} ${name}</h4>
-      <input type="text" value="${(p.vow||"").replace(/"/g,'&quot;')}" placeholder="Your vow for ${name}..." onchange="savePillar('${name}','vow',this.value)">
-      <input type="date" value="${p.target||""}" onchange="savePillar('${name}','target',this.value)">
-      <label class="done-lbl"><input type="checkbox" ${p.done?"checked":""} onchange="savePillar('${name}','done',this.checked)"> Achieved</label>
-    </div>`;
-  }).join("");
-}
-function savePillar(name, field, value){
-  const data = getPillars();
-  data[name] = Object.assign({vow:"",target:"",done:false}, data[name], {[field]: value});
-  saveJSON(PILLARS_KEY, data);
-}
-
-/* ================= LETTERS ================= */
-function getLetters(){ return loadJSON(LETTERS_KEY, []); }
-function sealLetter(){
-  const text = $("letterText").value.trim();
-  const date = $("letterDate").value;
-  if(!text || !date){ alert("Write a letter and pick an unlock date."); return; }
-  const letters = getLetters();
-  letters.unshift({ id: Date.now(), text, revealDate: date, created: todayKey() });
-  saveJSON(LETTERS_KEY, letters);
-  $("letterText").value=""; $("letterDate").value="";
-  buildLetters();
-}
-function buildLetters(){
-  const letters = getLetters();
-  if(letters.length===0){ $("lettersList").innerHTML = `<div class="sub">No letters yet. Write one above — future you will thank you.</div>`; return; }
-  const today = todayKey();
-  $("lettersList").innerHTML = letters.map(l=>{
-    const locked = l.revealDate > today;
-    if(locked){
-      const days = Math.ceil((new Date(l.revealDate)-new Date(today))/DAY_MS);
-      return `<div class="letter-item locked"><div class="lmeta">🔒 Sealed ${l.created} · Unlocks ${l.revealDate} (${days} day${days===1?'':'s'} left)</div></div>`;
-    }
-    return `<div class="letter-item"><div class="lmeta">✉️ Written ${l.created} · Unlocked ${l.revealDate}</div><div class="ltext">${l.text.replace(/</g,'&lt;')}</div></div>`;
   }).join("");
 }
 
