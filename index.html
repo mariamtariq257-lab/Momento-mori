@@ -133,9 +133,14 @@
   .ring .ring-txt small { font-size: 11px; color:#8a8aa0; font-weight:700; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
+  .stat-headline {
+    font-size: 14.5px; font-weight: 700; color: #1A1A2E; background: #FFFBF5;
+    border-radius: 12px; padding: 13px 16px; margin-bottom: 16px; line-height: 1.5;
+    border-left: 4px solid #2EC4B6;
+  }
   .stat-box { background: #FFFBF5; border-radius: 14px; padding: 14px 16px; border-left: 4px solid var(--c,#FF6B6B); }
-  .stat-box .num { font-size: 22px; font-weight: 900; font-variant-numeric: tabular-nums; }
-  .stat-box .lbl { font-size: 11.5px; color: #8a8aa0; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 2px; }
+  .stat-box .num { font-size: 23px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--c,#1A1A2E); }
+  .stat-box .lbl { font-size: 11.5px; color: #55556a; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
 
   /* fun facts — playful colored tiles instead of the plain stat grid */
   .fun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; }
@@ -150,9 +155,21 @@
   .fun-tile .lbl { font-size: 10.5px; font-weight: 700; opacity: .92; margin-top: 3px; text-transform: uppercase; letter-spacing: .3px; }
 
   .countdown-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
-  .cd-box { background: #1A1A2E; color: #fff; border-radius: 14px; padding: 14px 10px; min-width: 78px; text-align: center; }
+  .cd-box {
+    background: linear-gradient(160deg,#2D2A4A,#1A1A2E); color: #fff; border-radius: 14px;
+    padding: 14px 10px; min-width: 78px; text-align: center; border: 1px solid rgba(255,255,255,.07);
+    animation: cdGlow 3.2s ease-in-out infinite;
+  }
+  @keyframes cdGlow {
+    0%,100% { box-shadow: 0 4px 14px rgba(155,93,229,.22); }
+    50% { box-shadow: 0 4px 20px rgba(255,107,107,.32); }
+  }
   .cd-box .n { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; background: linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .cd-box .u { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #b8b8cc; margin-top: 2px; }
+  .life-arrow-line {
+    text-align: center; margin-top: 16px; font-size: 15px; font-weight: 700; color: #6b6b80;
+  }
+  .life-arrow-line b { color: #1A1A2E; }
 
   .grid-tabs { display:flex; gap:8px; margin-bottom: 14px; flex-wrap:wrap; }
   .grid-tab { border:2px solid #eee0e8; background:#fff; padding:7px 16px; border-radius:999px; font-weight:800; font-size:12px; cursor:pointer; color:#8a8aa0; }
@@ -398,34 +415,44 @@
       </div>
     </div>
 
+    <!-- MERGED: one card, two lenses on the same countdown, instead of two separate cards -->
     <div class="card" style="--accent:#9B5DE5">
-      <h2>⏳ Time Remaining (ticking live, out of 100 years)</h2>
-      <div class="countdown-row" id="lifeCountdown"></div>
-    </div>
-
-    <div class="card" style="--accent:#06D6A0">
-      <h2>😴 Awake Time Remaining</h2>
-      <p class="sub" style="margin-bottom:12px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
-      <div class="grid-tabs" id="awakeUnitTabs">
-        <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
-        <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
-        <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
-        <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+      <h2>⏳ How Much Is Actually Left</h2>
+      <div class="grid-tabs" id="timeScopeTabs">
+        <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
+        <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Years Only</button>
       </div>
-      <div class="big-stat" style="margin-top:14px;text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
-      <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
-      <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
-      <div class="sleep-cost-line" id="sleepCostLine"></div>
+
+      <div id="scopeAll">
+        <div class="countdown-row" id="lifeCountdown"></div>
+      </div>
+
+      <div id="scopeAwake" style="display:none;">
+        <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
+        <div class="grid-tabs" id="awakeUnitTabs">
+          <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
+          <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
+          <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
+          <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+        </div>
+        <div class="big-stat" style="margin-top:14px;text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+        <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+        <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
+        <div class="sleep-cost-line" id="sleepCostLine"></div>
+      </div>
+
+      <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
     </div>
 
     <div class="card" style="--accent:#2EC4B6">
       <h2>📊 Your Numbers</h2>
+      <div class="stat-headline" id="statHeadline"></div>
       <div class="stat-grid" id="statGrid"></div>
     </div>
 
-    <!-- DAILY CHECK-IN — mood picked here is what colors the life grid below -->
+    <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid below -->
     <div class="card" style="--accent:#06D6A0">
-      <h2>✅ How Was Today? <span class="badge">colors your life grid below</span></h2>
+      <h2>✨ What's The Vibe Today? <span class="badge">colors your life grid below</span></h2>
       <div class="yesterday-line" id="yesterdayLine" style="display:none;">
         <span class="yswatch" id="yesterdaySwatch"></span>
         <span id="yesterdayText"></span>
@@ -438,10 +465,6 @@
           <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
           <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
         </div>
-      </div>
-      <div class="checkin-buttons">
-        <button class="yn-btn yes" id="ynYes" onclick="setCheckin(true)">Today counted</button>
-        <button class="yn-btn no" id="ynNo" onclick="setCheckin(false)">Not really</button>
       </div>
       <div class="field" style="margin-bottom:8px;"><textarea id="checkinNote" rows="2" placeholder="Optional note to your future self about today..." onblur="saveCheckinNote()"></textarea></div>
       <div class="streak-row">
@@ -461,7 +484,7 @@
       </div>
       <div class="grid-legend">
         <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
-        <span><i class="swatch" style="background:#d8d8e2"></i>Lived, no check-in that day</span>
+        <span><i class="swatch" style="background:#D9A857"></i>Lived, no check-in that day</span>
         <span><i class="swatch" style="background:#f1f1f6"></i>Future</span>
         <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
       </div>
@@ -484,15 +507,6 @@
       <h2>📈 Mood Trend — how your weeks have actually gone</h2>
       <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
       <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here — permanently, not just the last 14 days.</div>
-    </div>
-
-    <!-- SEARCHABLE JOURNAL -->
-    <div class="card" style="--accent:#9B5DE5">
-      <h2>📔 Your Journal — every day you've logged, forever</h2>
-      <div class="field journal-search">
-        <input type="text" id="journalSearch" placeholder="Search your notes... (e.g. 'gym', 'bad day', 'promotion')" oninput="buildJournal(this.value)">
-      </div>
-      <div class="journal-list" id="journalList"></div>
     </div>
 
     <div class="card quote-card">
@@ -527,7 +541,7 @@ const DAY_MS = 86400000;
 const YEAR_DAYS = 365.2425;
 // The life grid no longer uses fixed per-decade colors — every lived cell is colored by
 // the mood you actually logged for that stretch of time. These are the two fallbacks.
-const GREY_UNLOGGED = "#d8d8e2";   // lived, but no check-in that period
+const GREY_UNLOGGED = "#D9A857";   // lived, but no check-in that period — warm, not a dead grey
 const FUTURE_COLOR = "#f1f1f6";    // hasn't happened yet
 
 const QUOTES = [
@@ -926,14 +940,21 @@ function tick(d){
   $("ring").style.setProperty("--p", s.pctLived);
   $("ringPct").textContent = s.pctLived.toFixed(1) + "%";
 
+  // Seconds ticking on a 100-year countdown is just visual noise — dropped in favor of
+  // years/days/hrs/min, which is the resolution that actually means something here.
   const rem = Math.max(s.endDate - s.now, 0);
-  renderCountdown("lifeCountdown", rem, ["YRS","DAYS","HRS","MIN","SEC"], true);
+  renderCountdown("lifeCountdown", rem, ["YRS","DAYS","HRS","MIN"], true);
 
   const bDays = Math.ceil(Math.max(s.nextBday - s.now, 0) / DAY_MS);
   $("birthdayCompact").textContent = `🎂 Next birthday in ${bDays} day${bDays===1?'':'s'}`;
 
   const todayEnd = new Date(s.now.getFullYear(), s.now.getMonth(), s.now.getDate()+1, 0,0,0);
   renderHMS("todayCountdown", todayEnd - s.now);
+
+  // Headline first, numbers second — one plain-English sentence so the grid below
+  // doesn't need decoding before it means anything.
+  $("statHeadline").textContent =
+    `You've lived ${fmt(s.ageDays)} days — about ${fmt(s.weeksLived)} weeks — and have roughly ${fmt(s.daysRemaining)} days left on the clock.`;
 
   $("statGrid").innerHTML = [
     [fmt(s.ageDays), "Days lived", "#FF6B6B"],
@@ -993,7 +1014,7 @@ function renderCountdown(elId, ms, units, includeYears){
     const dd = Math.floor(totalSec / 86400); totalSec -= dd*86400;
     const hh = Math.floor(totalSec / 3600); totalSec -= hh*3600;
     const mm = Math.floor(totalSec / 60); totalSec -= mm*60;
-    parts = [y, dd, hh, mm, totalSec];
+    parts = [y, dd, hh, mm]; // seconds dropped on purpose — see caller
   } else {
     const dd = Math.floor(totalSec / 86400); totalSec -= dd*86400;
     const hh = Math.floor(totalSec / 3600); totalSec -= hh*3600;
@@ -1001,6 +1022,14 @@ function renderCountdown(elId, ms, units, includeYears){
     parts = [dd, hh, mm, totalSec];
   }
   el.innerHTML = parts.map((p,i)=>`<div class="cd-box"><div class="n">${pad(p)}</div><div class="u">${units[i]}</div></div>`).join("");
+}
+function setTimeScope(scope){
+  document.querySelectorAll("#timeScopeTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.scope===scope));
+  $("scopeAll").style.display = scope==="all" ? "block" : "none";
+  $("scopeAwake").style.display = scope==="awake" ? "block" : "none";
+  $("lifeArrowLine").innerHTML = scope==="awake"
+    ? "↓ Sleep already took its cut. <b>But are you even awake for the rest?</b>"
+    : "↓ <b>Life is just this much.</b>";
 }
 
 /* ================= GRID VIEWS ================= */
@@ -1156,17 +1185,11 @@ function showQuote(){
 
 /* ================= DAILY CHECK-IN ================= */
 function getCheckins(){ return loadJSON(CHECKIN_KEY, {}); }
-function setCheckin(done){
-  const data = getCheckins();
-  const k = todayKey();
-  data[k] = Object.assign({}, data[k], { done, note: (data[k]&&data[k].note)||"" });
-  saveJSON(CHECKIN_KEY, data);
-  refreshCheckinUI();
-}
 function setMood(color, btnEl){
   const data = getCheckins();
   const k = todayKey();
-  data[k] = Object.assign({}, data[k], { mood: color });
+  // Picking a mood IS checking in — no separate "today counted" click needed.
+  data[k] = Object.assign({}, data[k], { mood: color, done: true });
   saveJSON(CHECKIN_KEY, data);
   [...btnEl.parentElement.children].forEach(c=>c.classList.remove("picked"));
   btnEl.classList.add("picked");
@@ -1178,7 +1201,6 @@ function saveCheckinNote(){
   const k = todayKey();
   data[k] = Object.assign({}, data[k], { note: $("checkinNote").value });
   saveJSON(CHECKIN_KEY, data);
-  buildJournal($("journalSearch") ? $("journalSearch").value : "");
 }
 function getStreaks(){
   const data = getCheckins();
@@ -1207,8 +1229,6 @@ function refreshCheckinUI(){
   const data = getCheckins();
   const k = todayKey();
   const today = data[k];
-  $("ynYes").classList.toggle("picked", today && today.done===true);
-  $("ynNo").classList.toggle("picked", today && today.done===false);
   $("checkinNote").value = (today && today.note) || "";
   [...document.querySelectorAll("#moodRow .mood-swatch")].forEach(btn=>{
     const mc = btn.style.getPropertyValue("--mc").trim();
@@ -1232,7 +1252,6 @@ function refreshCheckinUI(){
   }
   $("histDots").innerHTML = dots;
   buildMoodChart();
-  buildJournal($("journalSearch") ? $("journalSearch").value : "");
 
   // Today's mood feeds straight into the life grid below — recolor it immediately
   // instead of waiting for the next full render.
@@ -1352,32 +1371,6 @@ function buildMoodChart(){
       }
     }
   });
-}
-
-/* ================= SEARCHABLE JOURNAL (every logged day, forever) ================= */
-function buildJournal(searchTerm){
-  searchTerm = (searchTerm || "").toLowerCase().trim();
-  const data = getCheckins();
-  let entries = Object.entries(data).map(([date, v]) => ({ date, ...v }));
-  entries.sort((a,b) => b.date.localeCompare(a.date));
-  if(searchTerm){
-    entries = entries.filter(e => (e.note||"").toLowerCase().includes(searchTerm) || e.date.includes(searchTerm));
-  }
-  const container = $("journalList");
-  if(!container) return;
-  if(entries.length === 0){
-    container.innerHTML = `<div class="sub" style="text-align:center;padding:20px 0;">${
-      searchTerm ? `No entries match "${searchTerm}".` : "No journal entries yet — check in above and they'll show up here, searchable, forever."
-    }</div>`;
-    return;
-  }
-  container.innerHTML = entries.map(e => {
-    const dateLabel = new Date(e.date+"T00:00:00").toLocaleDateString(undefined,{weekday:'short', month:'short', day:'numeric', year:'numeric'});
-    const moodDot = e.mood ? `<span class="j-mood" style="background:${e.mood}"></span>` : "";
-    const doneBadge = e.done===true ? `<span class="j-badge yes">Counted</span>` : (e.done===false ? `<span class="j-badge no">Didn't count</span>` : "");
-    const noteHtml = e.note ? `<div class="j-note">${e.note.replace(/</g,"&lt;")}</div>` : `<div class="j-note empty">No note.</div>`;
-    return `<div class="j-entry"><div class="j-head">${moodDot}<span class="j-date">${dateLabel}</span>${doneBadge}</div>${noteHtml}</div>`;
-  }).join("");
 }
 
 /* ================= INIT ================= */
