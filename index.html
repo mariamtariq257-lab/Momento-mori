@@ -225,11 +225,16 @@
   /* dashboard layout — cards arranged side by side instead of one long vertical stack */
   .card-divider { border: none; border-top: 1.5px solid #f1f1f6; margin: 20px 0; }
   .dash-2col { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:stretch; margin-bottom:20px; }
-  .dash-2col > .card { margin-bottom: 0; }
-  .dash-life-row { display:grid; grid-template-columns: 1.7fr 1fr; gap:20px; align-items:start; margin-bottom: 20px; }
-  .dash-life-row > .card { margin-bottom: 0; }
-  .dash-side { display:flex; flex-direction:column; gap:20px; }
-  .dash-side > .card { margin-bottom: 0; }
+  .dash-2col > .card { margin-bottom: 0; min-width: 0; }
+  .dash-life-row { display:grid; grid-template-columns: 1.7fr 1fr; gap:20px; align-items:start; margin-bottom: 20px; min-width: 0; }
+  .dash-life-row > .card { margin-bottom: 0; min-width: 0; }
+  .dash-side { display:flex; flex-direction:column; gap:20px; min-width: 0; }
+  .dash-side > .card { margin-bottom: 0; min-width: 0; }
+  /* grid/flex items default to min-width:auto, which lets wide inner content (the
+     milestones strip, the weeks grid, the chart) force the whole track wider than its
+     fr share instead of scrolling inside itself — min-width:0 here is what makes the
+     overflow-x:auto containers below actually contain their content. */
+  .weeks-scroll, .milestones, .chart-wrap { min-width: 0; }
   @media (max-width:900px){
     .dash-2col { grid-template-columns:1fr; }
     .dash-life-row { grid-template-columns:1fr; }
