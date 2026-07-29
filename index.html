@@ -222,8 +222,18 @@
   .quote-dots span { width:6px; height:6px; border-radius:50%; background:#4a4a6a; }
   .quote-dots span.on { background: linear-gradient(90deg,#FFC93C,#FF6B6B); }
 
-  .two-col { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
-  @media (max-width:700px){ .two-col{ grid-template-columns:1fr; } }
+  /* dashboard layout — cards arranged side by side instead of one long vertical stack */
+  .card-divider { border: none; border-top: 1.5px solid #f1f1f6; margin: 20px 0; }
+  .dash-2col { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:stretch; margin-bottom:20px; }
+  .dash-2col > .card { margin-bottom: 0; }
+  .dash-life-row { display:grid; grid-template-columns: 1.7fr 1fr; gap:20px; align-items:start; margin-bottom: 20px; }
+  .dash-life-row > .card { margin-bottom: 0; }
+  .dash-side { display:flex; flex-direction:column; gap:20px; }
+  .dash-side > .card { margin-bottom: 0; }
+  @media (max-width:900px){
+    .dash-2col { grid-template-columns:1fr; }
+    .dash-life-row { grid-template-columns:1fr; }
+  }
   .three-col { display:grid; grid-template-columns: repeat(3,1fr); gap:14px; }
   @media (max-width:700px){ .three-col{ grid-template-columns:1fr 1fr; } }
   @media (max-width:460px){ .three-col{ grid-template-columns:1fr; } }
@@ -412,14 +422,13 @@
       </div>
     </div>
 
+    <!-- MERGED: today's countdown + % of life lived, one glance, one card -->
     <div class="card today-card" style="--accent:#FF9F1C">
       <h2>🔥 Today <span class="badge today-badge">LIVE</span></h2>
       <div class="countdown-row" id="todayCountdown"></div>
       <div class="sub" style="text-align:center;margin-top:10px;">How will you use the time that's left of today? What actually matters gets done now, not "eventually."</div>
       <div class="bday-compact" id="birthdayCompact">🎂 —</div>
-    </div>
-
-    <div class="card" style="--accent:#FF6B6B">
+      <hr class="card-divider">
       <div class="hero">
         <div>
           <div class="big-stat"><span class="pct" id="pctLived">0%</span> lived<span class="hero-remain"><b id="pctRemain">0%</b> left</span></div>
@@ -432,101 +441,108 @@
       </div>
     </div>
 
-    <!-- MERGED: one card, two lenses on the same countdown, instead of two separate cards -->
-    <div class="card" style="--accent:#9B5DE5">
-      <div class="card-head-row">
-        <h2>⏳ How Much Is Actually Left</h2>
-        <div class="grid-tabs" id="timeScopeTabs">
-          <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
-          <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
+    <!-- dashboard row: two side-by-side info cards instead of two full-width stacked ones -->
+    <div class="dash-2col">
+      <div class="card" style="--accent:#9B5DE5">
+        <div class="card-head-row">
+          <h2>⏳ How Much Is Actually Left</h2>
+          <div class="grid-tabs" id="timeScopeTabs">
+            <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
+            <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
+          </div>
         </div>
-      </div>
 
-      <div id="scopeAll">
-        <div class="countdown-row" id="lifeCountdown"></div>
-      </div>
-
-      <div id="scopeAwake" style="display:none;">
-        <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
-        <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
-          <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
-          <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
-          <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
-          <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+        <div id="scopeAll">
+          <div class="countdown-row" id="lifeCountdown"></div>
         </div>
-        <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
-        <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
-        <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
-        <div class="sleep-cost-line" id="sleepCostLine"></div>
-      </div>
 
-      <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
-    </div>
-
-    <div class="card" style="--accent:#2EC4B6">
-      <h2>📊 Your Numbers</h2>
-      <div class="stat-headline" id="statHeadline"></div>
-      <div class="stat-grid" id="statGrid"></div>
-    </div>
-
-    <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid below -->
-    <div class="card beam-card" style="--accent:#06D6A0">
-      <h2>✨ What's The Vibe Today? <span class="badge">colors your life grid below</span></h2>
-      <div class="yesterday-line" id="yesterdayLine" style="display:none;">
-        <span class="yswatch" id="yesterdaySwatch"></span>
-        <span id="yesterdayText"></span>
-      </div>
-      <div class="field" style="margin-bottom:0;">
-        <div class="chip-row" id="moodRow">
-          <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
-          <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
-          <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
-          <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
-          <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+        <div id="scopeAwake" style="display:none;">
+          <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
+          <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
+            <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
+            <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
+            <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
+            <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+          </div>
+          <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+          <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+          <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
+          <div class="sleep-cost-line" id="sleepCostLine"></div>
         </div>
+
+        <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
       </div>
-      <div class="streak-row" style="margin-top:16px;">
-        <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
-        <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
-        <div class="dot-history" id="histDots"></div>
+
+      <div class="card" style="--accent:#2EC4B6">
+        <h2>📊 Your Numbers</h2>
+        <div class="stat-headline" id="statHeadline"></div>
+        <div class="stat-grid" id="statGrid"></div>
       </div>
     </div>
 
-    <div class="card" style="--accent:#FFA94D">
-      <div class="card-head-row">
-        <h2>🗓️ Your Life <span class="badge" id="gridTotalBadge"></span></h2>
-        <div class="grid-tabs" id="gridTabs">
-          <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
-          <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
-          <button class="grid-tab" data-m="years" onclick="setGridMode('years')">Years</button>
-          <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
+    <!-- dashboard row: the life grid anchors it, everything that feeds/explains it sits beside it -->
+    <div class="dash-life-row">
+      <div class="card" style="--accent:#FFA94D">
+        <div class="card-head-row">
+          <h2>🗓️ Your Life <span class="badge" id="gridTotalBadge"></span></h2>
+          <div class="grid-tabs" id="gridTabs">
+            <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
+            <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
+            <button class="grid-tab" data-m="years" onclick="setGridMode('years')">Years</button>
+            <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
+          </div>
+        </div>
+        <div class="grid-legend">
+          <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
+          <span><i class="swatch" style="background:#D9A857"></i>Lived, no check-in that day</span>
+          <span><i class="swatch" style="background:#f1f1f6"></i>Future</span>
+          <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
+        </div>
+        <div class="weeks-scroll"><div class="weeks-grid" id="weeksGrid"></div></div>
+      </div>
+
+      <div class="dash-side">
+        <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid -->
+        <div class="card beam-card" style="--accent:#06D6A0">
+          <h2>✨ What's The Vibe Today? <span class="badge">colors the grid</span></h2>
+          <div class="yesterday-line" id="yesterdayLine" style="display:none;">
+            <span class="yswatch" id="yesterdaySwatch"></span>
+            <span id="yesterdayText"></span>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <div class="chip-row" id="moodRow">
+              <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
+              <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
+              <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
+              <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
+              <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+            </div>
+          </div>
+          <div class="streak-row" style="margin-top:16px;">
+            <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
+            <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
+            <div class="dot-history" id="histDots"></div>
+          </div>
+        </div>
+
+        <div class="card" style="--accent:#06D6A0">
+          <h2>🏁 Milestones</h2>
+          <div class="milestones" id="milestones"></div>
+          <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
+        </div>
+
+        <!-- MOOD HISTOGRAM -->
+        <div class="card" style="--accent:#4D96FF">
+          <h2>📈 Mood Trend</h2>
+          <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
+          <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here.</div>
         </div>
       </div>
-      <div class="grid-legend">
-        <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
-        <span><i class="swatch" style="background:#D9A857"></i>Lived, no check-in that day</span>
-        <span><i class="swatch" style="background:#f1f1f6"></i>Future</span>
-        <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
-      </div>
-      <div class="weeks-scroll"><div class="weeks-grid" id="weeksGrid"></div></div>
-    </div>
-
-    <div class="card" style="--accent:#06D6A0">
-      <h2>🏁 Milestones</h2>
-      <div class="milestones" id="milestones"></div>
-      <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
     </div>
 
     <div class="card" style="--accent:#FF6B6B">
       <h2>✨ Fun Facts About Your Time So Far</h2>
       <div class="fun-grid" id="funGrid"></div>
-    </div>
-
-    <!-- MOOD HISTOGRAM -->
-    <div class="card" style="--accent:#4D96FF">
-      <h2>📈 Mood Trend — how your weeks have actually gone</h2>
-      <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
-      <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here — permanently, not just the last 14 days.</div>
     </div>
 
     <div class="card quote-card">
