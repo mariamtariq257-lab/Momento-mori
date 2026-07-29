@@ -22,18 +22,31 @@
     animation: shimmer 8s linear infinite;
   }
   @keyframes shimmer { to { background-position: 300% center; } }
+  header h1 #headerName {
+    display: block; font-size: clamp(14px, 2.2vw, 18px); font-weight: 800; letter-spacing: 0;
+    background: none; -webkit-text-fill-color: initial; color: #9B5DE5; margin-top: 2px; animation: none;
+  }
   header p.tagline { font-size: 15px; color: #6b6b80; margin-top: 6px; font-weight: 600; letter-spacing: 0.5px; }
   header .clock { margin-top: 10px; font-size: 13px; color: #9a9ab0; font-variant-numeric: tabular-nums; }
+
+  /* subtle glowing highlight to pull the eye toward the card that still needs input */
+  .card.beam-card { position: relative; animation: beamPulse 2.6s ease-in-out infinite; }
+  @keyframes beamPulse {
+    0%,100% { box-shadow: 0 4px 24px rgba(6,214,160,.14); }
+    50% { box-shadow: 0 4px 34px rgba(6,214,160,.42); }
+  }
 
   .card {
     background: #ffffff; border-radius: 20px; padding: 22px 24px; margin-bottom: 20px;
     box-shadow: 0 4px 24px rgba(30,20,60,0.07); border-top: 5px solid var(--accent, #FF6B6B);
   }
   .card h2 {
-    font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: #8a8aa0; font-weight: 800;
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.2px; color: var(--accent, #FF6B6B); font-weight: 800;
     margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
   }
   .card h2 .badge { font-size:10px; background:#f1f1f6; color:#8a8aa0; padding:2px 8px; border-radius:999px; font-weight:800; letter-spacing:.4px; }
+  .card-head-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:14px; }
+  .card-head-row h2 { margin-bottom:0; }
 
   .field { text-align: left; margin-bottom: 16px; }
   .field label { display: block; font-size: 12px; font-weight: 800; color: #8a8aa0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
@@ -142,17 +155,19 @@
   .stat-box .num { font-size: 23px; font-weight: 900; font-variant-numeric: tabular-nums; color: var(--c,#1A1A2E); }
   .stat-box .lbl { font-size: 11.5px; color: #55556a; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; margin-top: 3px; }
 
-  /* fun facts — playful colored tiles instead of the plain stat grid */
-  .fun-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 14px; }
+  /* fun facts — playful colored tiles, sized to fit all 7 in one row on desktop */
+  .fun-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+  @media (max-width: 900px) { .fun-grid { grid-template-columns: repeat(4, 1fr); } }
+  @media (max-width: 520px) { .fun-grid { grid-template-columns: repeat(3, 1fr); } }
   .fun-tile {
-    border-radius: 16px; padding: 18px 14px; text-align: center; color: #fff;
-    background: var(--fc,#FF6B6B); box-shadow: 0 8px 18px rgba(0,0,0,.10);
+    border-radius: 14px; padding: 12px 6px; text-align: center; color: #fff;
+    background: var(--fc,#FF6B6B); box-shadow: 0 6px 14px rgba(0,0,0,.10);
     transition: transform .15s ease;
   }
-  .fun-tile:hover { transform: translateY(-3px) scale(1.02); }
-  .fun-tile .emoji { font-size: 26px; margin-bottom: 6px; }
-  .fun-tile .num { font-size: 19px; font-weight: 900; font-variant-numeric: tabular-nums; }
-  .fun-tile .lbl { font-size: 10.5px; font-weight: 700; opacity: .92; margin-top: 3px; text-transform: uppercase; letter-spacing: .3px; }
+  .fun-tile:hover { transform: translateY(-3px) scale(1.03); }
+  .fun-tile .emoji { font-size: 18px; margin-bottom: 4px; }
+  .fun-tile .num { font-size: 13px; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .fun-tile .lbl { font-size: 8.5px; font-weight: 700; opacity: .92; margin-top: 3px; text-transform: uppercase; letter-spacing: .2px; line-height: 1.25; }
 
   .countdown-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
   .cd-box {
@@ -171,9 +186,11 @@
   }
   .life-arrow-line b { color: #1A1A2E; }
 
-  .grid-tabs { display:flex; gap:8px; margin-bottom: 14px; flex-wrap:wrap; }
-  .grid-tab { border:2px solid #eee0e8; background:#fff; padding:7px 16px; border-radius:999px; font-weight:800; font-size:12px; cursor:pointer; color:#8a8aa0; }
-  .grid-tab.active { background: linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff; border-color:transparent; }
+  /* compact segmented-control style — used for grid view tabs, time-scope tabs, awake unit
+     tabs. Sits inline next to a card's h2 instead of eating its own full-width row. */
+  .grid-tabs { display:inline-flex; gap:2px; background:#f1f1f6; border-radius:999px; padding:3px; flex-wrap:wrap; margin-bottom:0; }
+  .grid-tab { border:none; background:transparent; padding:6px 12px; border-radius:999px; font-weight:800; font-size:11px; cursor:pointer; color:#8a8aa0; }
+  .grid-tab.active { background: linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff; }
   .grid-legend { display:flex; gap:16px; font-size: 12px; color:#6b6b80; margin-bottom: 14px; flex-wrap:wrap; }
   .grid-legend span { display:inline-flex; align-items:center; gap:6px; }
   .swatch { width:11px; height:11px; border-radius:3px; display:inline-block; }
@@ -349,7 +366,7 @@
 <div class="wrap">
 
   <header>
-    <h1>MEMENTO MORI</h1>
+    <h1>MEMENTO MORI<span id="headerName"></span></h1>
     <p class="tagline">Remember — you will die. So live.</p>
     <div class="clock" id="liveClock"></div>
   </header>
@@ -417,10 +434,12 @@
 
     <!-- MERGED: one card, two lenses on the same countdown, instead of two separate cards -->
     <div class="card" style="--accent:#9B5DE5">
-      <h2>⏳ How Much Is Actually Left</h2>
-      <div class="grid-tabs" id="timeScopeTabs">
-        <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
-        <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Years Only</button>
+      <div class="card-head-row">
+        <h2>⏳ How Much Is Actually Left</h2>
+        <div class="grid-tabs" id="timeScopeTabs">
+          <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
+          <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
+        </div>
       </div>
 
       <div id="scopeAll">
@@ -429,13 +448,13 @@
 
       <div id="scopeAwake" style="display:none;">
         <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
-        <div class="grid-tabs" id="awakeUnitTabs">
+        <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
           <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
           <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
           <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
           <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
         </div>
-        <div class="big-stat" style="margin-top:14px;text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+        <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
         <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
         <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
         <div class="sleep-cost-line" id="sleepCostLine"></div>
@@ -451,13 +470,13 @@
     </div>
 
     <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid below -->
-    <div class="card" style="--accent:#06D6A0">
+    <div class="card beam-card" style="--accent:#06D6A0">
       <h2>✨ What's The Vibe Today? <span class="badge">colors your life grid below</span></h2>
       <div class="yesterday-line" id="yesterdayLine" style="display:none;">
         <span class="yswatch" id="yesterdaySwatch"></span>
         <span id="yesterdayText"></span>
       </div>
-      <div class="field" style="margin-bottom:6px;">
+      <div class="field" style="margin-bottom:0;">
         <div class="chip-row" id="moodRow">
           <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
           <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
@@ -466,21 +485,22 @@
           <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
         </div>
       </div>
-      <div class="field" style="margin-bottom:8px;"><textarea id="checkinNote" rows="2" placeholder="Optional note to your future self about today..." onblur="saveCheckinNote()"></textarea></div>
-      <div class="streak-row">
+      <div class="streak-row" style="margin-top:16px;">
         <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
         <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
         <div class="dot-history" id="histDots"></div>
       </div>
     </div>
 
-    <div class="card" style="--accent:#4D96FF">
-      <h2>🗓️ Your Life — pick a view <span class="badge" id="gridTotalBadge"></span></h2>
-      <div class="grid-tabs" id="gridTabs">
-        <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
-        <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
-        <button class="grid-tab" data-m="years" onclick="setGridMode('years')">Years</button>
-        <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
+    <div class="card" style="--accent:#FFA94D">
+      <div class="card-head-row">
+        <h2>🗓️ Your Life <span class="badge" id="gridTotalBadge"></span></h2>
+        <div class="grid-tabs" id="gridTabs">
+          <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
+          <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
+          <button class="grid-tab" data-m="years" onclick="setGridMode('years')">Years</button>
+          <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
+        </div>
       </div>
       <div class="grid-legend">
         <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
@@ -883,6 +903,7 @@ function formatAwakeTime(years, unit){
 function render(d){
   $("wizardCard").style.display = "none";
   $("dashboard").style.display = "block";
+  $("headerName").textContent = d.name ? `— ${d.name}'s` : "";
 
   buildGrid(gridMode, d);
   buildMilestones(d);
@@ -966,13 +987,13 @@ function tick(d){
   ].map(([num,lbl,c])=>`<div class="stat-box" style="--c:${c}"><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
 
   $("funGrid").innerHTML = [
-    ["❤️", fmt(s.heartbeats), "Heartbeats so far", "#FF6B6B"],
-    ["💨", fmt(s.breaths), "Breaths taken", "#FF9F1C"],
-    ["🌅", fmt(s.ageDays), "Sunrises witnessed", "#2EC4B6"],
-    ["📅", fmt(s.mondays), "Mondays survived", "#4D96FF"],
-    ["🎉", fmt(s.weekends), "Weekends lived", "#9B5DE5"],
-    ["🌕", fmt(s.fullMoons), "Full moons witnessed", "#06D6A0"],
-    ["🐸", s.leapYears, "Leap years lived through", "#FFC93C"],
+    ["❤️", fmt(s.heartbeats), "Heartbeats", "#FF6B6B"],
+    ["💨", fmt(s.breaths), "Breaths", "#FF9F1C"],
+    ["🌅", fmt(s.ageDays), "Sunrises", "#2EC4B6"],
+    ["📅", fmt(s.mondays), "Mondays", "#4D96FF"],
+    ["🎉", fmt(s.weekends), "Weekends", "#9B5DE5"],
+    ["🌕", fmt(s.fullMoons), "Full moons", "#06D6A0"],
+    ["🐸", s.leapYears, "Leap years", "#FFC93C"],
   ].map(([emoji,num,lbl,c])=>`<div class="fun-tile" style="--fc:${c}"><div class="emoji">${emoji}</div><div class="num">${num}</div><div class="lbl">${lbl}</div></div>`).join("");
 
   updateMilestones(d, s);
@@ -1196,12 +1217,6 @@ function setMood(color, btnEl){
   refreshCheckinUI();
   showAdvice(color);
 }
-function saveCheckinNote(){
-  const data = getCheckins();
-  const k = todayKey();
-  data[k] = Object.assign({}, data[k], { note: $("checkinNote").value });
-  saveJSON(CHECKIN_KEY, data);
-}
 function getStreaks(){
   const data = getCheckins();
   let current = 0, cursor = new Date();
@@ -1229,7 +1244,6 @@ function refreshCheckinUI(){
   const data = getCheckins();
   const k = todayKey();
   const today = data[k];
-  $("checkinNote").value = (today && today.note) || "";
   [...document.querySelectorAll("#moodRow .mood-swatch")].forEach(btn=>{
     const mc = btn.style.getPropertyValue("--mc").trim();
     btn.classList.toggle("picked", !!(today && today.mood && today.mood.trim() === mc));
