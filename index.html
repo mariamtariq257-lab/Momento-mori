@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <title>Memento Mori — Life Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -16,7 +15,7 @@
 
   header { text-align: center; margin-bottom: 28px; }
   header h1 {
-    font-size: clamp(32px, 6vw, 56px); font-weight: 900; letter-spacing: -1px;
+    font-size: clamp(22px, 4vw, 34px); font-weight: 900; letter-spacing: -0.5px;
     background: linear-gradient(90deg, #FF6B6B, #FFC93C, #2EC4B6, #9B5DE5, #FF6B6B);
     background-size: 300% auto; -webkit-background-clip: text; background-clip: text; color: transparent;
     animation: shimmer 8s linear infinite;
@@ -35,6 +34,15 @@
     0%,100% { box-shadow: 0 4px 24px rgba(6,214,160,.14); }
     50% { box-shadow: 0 4px 34px rgba(6,214,160,.42); }
   }
+  /* pinned check-in header — beams/pops so it reads as the thing to do first, not just a label */
+  .vibe-cta { display:flex; align-items:center; gap:8px; font-size:15px; margin-bottom:4px; }
+  .vibe-cta .pop-emoji { display:inline-block; animation: popBeam 1.7s ease-in-out infinite; }
+  @keyframes popBeam {
+    0%,55%,100% { transform: scale(1) rotate(0deg); }
+    70% { transform: scale(1.3) rotate(-10deg); }
+    85% { transform: scale(1.05) rotate(6deg); }
+  }
+  .vibe-sub { font-size:11.5px; color:#06D6A0; font-weight:800; margin-bottom:14px; }
 
   .card {
     background: #ffffff; border-radius: 20px; padding: 22px 24px; margin-bottom: 20px;
@@ -122,13 +130,17 @@
     color:#8a8aa0; background:#FFFBF5; border-radius:999px; padding:8px 16px;
   }
 
-  .hero { display: grid; grid-template-columns: 1fr 220px; gap: 24px; align-items: center; }
-  @media (max-width: 700px) { .hero { grid-template-columns: 1fr; } }
-  .hero .big-stat { font-size: clamp(30px, 5.4vw, 48px); font-weight: 900; line-height: 1.15; }
+  /* hero now carries three things in one row: the lived stat, the "actually left"
+     countdown, and the ring — merged so there's no separate stacked section below. */
+  .hero { display: grid; grid-template-columns: 1fr 1.25fr 150px; gap: 18px; align-items: center; }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
+  .hero .big-stat { font-size: clamp(20px, 3.6vw, 30px); font-weight: 900; line-height: 1.15; }
   .hero .big-stat span.pct { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .hero .big-stat .hero-remain { display:block; font-size: 17px; font-weight:700; color:#6b6b80; margin-top:4px; }
+  .hero .big-stat .hero-remain { display:block; font-size: 12.5px; font-weight:700; color:#6b6b80; margin-top:4px; }
   .hero .big-stat .hero-remain b { color:#06D6A0; font-weight:900; }
-  .hero .sub { color: #6b6b80; font-size: 14px; margin-top: 8px; font-weight: 600; }
+  .hero .sub { color: #6b6b80; font-size: 12.5px; margin-top: 6px; font-weight: 600; }
+  .hero-left-col h2 { font-size: 13px; }
+  .hero-left-col .life-arrow-line { font-size: 12px; margin-top: 10px; }
   .sleep-cost-line {
     text-align:center; margin-top:10px; font-size:12.5px; font-weight:700; color:#FF6B6B;
     background:#FFF3EE; border-radius:10px; padding:9px 12px;
@@ -137,13 +149,13 @@
   .progress-inner { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6); transition: width .6s ease; }
   .ring-wrap { display:flex; align-items:center; justify-content:center; }
   .ring {
-    width: 190px; height: 190px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    width: 140px; height: 140px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
     flex-direction: column; background: conic-gradient(#FF6B6B calc(var(--p) * 1%), #f1f1f6 0); position: relative;
   }
-  .ring::before { content:""; position:absolute; width:150px; height:150px; background:#fff; border-radius:50%; }
+  .ring::before { content:""; position:absolute; width:110px; height:110px; background:#fff; border-radius:50%; }
   .ring .ring-txt { position: relative; text-align: center; }
-  .ring .ring-txt b { font-size: 30px; display:block; }
-  .ring .ring-txt small { font-size: 11px; color:#8a8aa0; font-weight:700; }
+  .ring .ring-txt b { font-size: 22px; display:block; }
+  .ring .ring-txt small { font-size: 9.5px; color:#8a8aa0; font-weight:700; }
 
   .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 14px; }
   .stat-headline {
@@ -169,18 +181,18 @@
   .fun-tile .num { font-size: 13px; font-weight: 900; font-variant-numeric: tabular-nums; }
   .fun-tile .lbl { font-size: 8.5px; font-weight: 700; opacity: .92; margin-top: 3px; text-transform: uppercase; letter-spacing: .2px; line-height: 1.25; }
 
-  .countdown-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+  .countdown-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-start; }
   .cd-box {
-    background: linear-gradient(160deg,#2D2A4A,#1A1A2E); color: #fff; border-radius: 14px;
-    padding: 14px 10px; min-width: 78px; text-align: center; border: 1px solid rgba(255,255,255,.07);
+    background: linear-gradient(160deg,#2D2A4A,#1A1A2E); color: #fff; border-radius: 12px;
+    padding: 9px 6px; min-width: 58px; flex: 1 1 58px; text-align: center; border: 1px solid rgba(255,255,255,.07);
     animation: cdGlow 3.2s ease-in-out infinite;
   }
   @keyframes cdGlow {
     0%,100% { box-shadow: 0 4px 14px rgba(155,93,229,.22); }
     50% { box-shadow: 0 4px 20px rgba(255,107,107,.32); }
   }
-  .cd-box .n { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; background: linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .cd-box .u { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: #b8b8cc; margin-top: 2px; }
+  .cd-box .n { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; background: linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .cd-box .u { font-size: 8px; text-transform: uppercase; letter-spacing: .4px; color: #b8b8cc; margin-top: 2px; }
   .life-arrow-line {
     text-align: center; margin-top: 16px; font-size: 15px; font-weight: 700; color: #6b6b80;
   }
@@ -197,7 +209,7 @@
   .weeks-scroll { overflow-x: auto; padding-bottom: 6px; }
   .weeks-grid { display: inline-grid; grid-auto-flow: row; gap: 3px; }
   .wk-row { display:flex; gap:3px; align-items:center; }
-  .wk-yr { width:28px; font-size:9px; color:#b0b0c0; font-weight:700; text-align:right; padding-right:4px; flex-shrink:0; }
+  .wk-yr { width:28px; font-size:9px; color:#FF9F1C; font-weight:800; text-align:right; padding-right:4px; flex-shrink:0; }
   .wk-cell { width: 8px; height: 8px; border-radius: 2px; background:#eee; flex-shrink:0; }
   .wk-cell.current { outline: 2px solid #FF3D3D; outline-offset: 1px; animation: pulse 1.4s ease-in-out infinite; }
   .dec-cell { width:46px; height:46px; border-radius:10px; background:#eee; flex-shrink:0; position:relative; overflow:hidden; }
@@ -206,13 +218,18 @@
   @keyframes pulse { 0%,100% { box-shadow:0 0 0 0 rgba(255,61,61,.55); } 50% { box-shadow:0 0 0 5px rgba(255,61,61,0); } }
   @keyframes pulse2 { 0%,100% { box-shadow:0 0 0 0 rgba(255,61,61,.5);} 50% { box-shadow:0 0 0 6px rgba(255,61,61,0);} }
 
-  .milestones { display:flex; gap: 14px; overflow-x: auto; padding: 6px 2px 12px; }
-  .ms-item { flex-shrink:0; text-align:center; min-width: 66px; }
-  .ms-dot { width: 42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:13px; margin: 0 auto 6px; }
-  .ms-dot.done { background: linear-gradient(135deg,#2EC4B6,#06D6A0); color:#fff; }
-  .ms-dot.next { background: linear-gradient(135deg,#FFC93C,#FF9F1C); color:#fff; box-shadow: 0 0 0 4px rgba(255,201,60,.3); }
-  .ms-dot.future { background:#f1f1f6; color:#b0b0c0; }
-  .ms-item .ms-lbl { font-size: 11px; color:#8a8aa0; font-weight:700; }
+  /* milestones — a vertical bar of rows instead of a horizontal scroll-strip, so it
+     reads top-to-bottom right alongside the life grid. */
+  .milestones-vertical { display:flex; flex-direction:column; gap:5px; max-height: 280px; overflow-y:auto; padding-right:2px; }
+  .ms-row { display:flex; align-items:center; gap:10px; padding:5px 7px; border-radius:10px; transition: background .15s ease; }
+  .ms-row.done { background:#F0FBF8; }
+  .ms-row.next { background:#FFFBF0; }
+  .ms-dot-sm { width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:10px; flex-shrink:0; }
+  .ms-dot-sm.done { background: linear-gradient(135deg,#2EC4B6,#06D6A0); color:#fff; }
+  .ms-dot-sm.next { background: linear-gradient(135deg,#FFC93C,#FF9F1C); color:#fff; box-shadow: 0 0 0 3px rgba(255,201,60,.3); }
+  .ms-dot-sm.future { background:#f1f1f6; color:#b0b0c0; }
+  .ms-row-label { font-size:12px; font-weight:700; color:#8a8aa0; }
+  .ms-row.done .ms-row-label, .ms-row.next .ms-row-label { color:#1A1A2E; }
 
   .quote-card { background: linear-gradient(120deg,#1A1A2E,#2D2A4A); color:#fff; border-top:none; text-align:center; padding: 34px 26px; }
   .quote-card .qtag { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:#9B5DE5; font-weight:800; margin-bottom:12px; }
@@ -226,7 +243,7 @@
   .card-divider { border: none; border-top: 1.5px solid #f1f1f6; margin: 20px 0; }
   .dash-2col { display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:stretch; margin-bottom:20px; }
   .dash-2col > .card { margin-bottom: 0; min-width: 0; }
-  .dash-life-row { display:grid; grid-template-columns: 1.7fr 1fr; gap:20px; align-items:start; margin-bottom: 20px; min-width: 0; }
+  .dash-life-row { display:grid; grid-template-columns: 2.3fr 1fr; gap:20px; align-items:start; margin-bottom: 20px; min-width: 0; }
   .dash-life-row > .card { margin-bottom: 0; min-width: 0; }
   .dash-side { display:flex; flex-direction:column; gap:20px; min-width: 0; }
   .dash-side > .card { margin-bottom: 0; min-width: 0; }
@@ -234,7 +251,7 @@
      milestones strip, the weeks grid, the chart) force the whole track wider than its
      fr share instead of scrolling inside itself — min-width:0 here is what makes the
      overflow-x:auto containers below actually contain their content. */
-  .weeks-scroll, .milestones, .chart-wrap { min-width: 0; }
+  .weeks-scroll, .milestones-vertical { min-width: 0; }
   @media (max-width:900px){
     .dash-2col { grid-template-columns:1fr; }
     .dash-life-row { grid-template-columns:1fr; }
@@ -292,9 +309,6 @@
   .time-row input[type=range] { width:100%; accent-color: var(--tc,#FF6B6B); height:6px; }
   .time-row .tproj { font-size:11.5px; color:#8a8aa0; margin-top:4px; font-weight:700; }
   .time-row .tproj b { color:#1A1A2E; }
-
-  .chart-wrap { position:relative; height:220px; }
-  .chart-empty { text-align:center; padding:30px 0; color:#8a8aa0; font-size:13px; font-weight:600; }
 
   .journal-search { margin-bottom:14px; }
   .j-entry { border-bottom:1px solid #f1f1f6; padding:12px 0; }
@@ -357,17 +371,31 @@
   .yesterday-line .yswatch { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
 
   /* ---------- STICKY CORNER WIDGETS (today's clock + quick actions, always in view) ---------- */
-  .sticky-today {
-    display:none; position:fixed; top:16px; right:16px; z-index:400; text-align:center;
-    background: linear-gradient(160deg,#2D2A4A,#1A1A2E); color:#fff; border-radius:14px;
-    padding:9px 16px; box-shadow:0 8px 24px rgba(0,0,0,.25); animation: cdGlow 3.2s ease-in-out infinite;
-  }
+  /* Stopwatch dial — a conic-gradient ring that fills as today burns down, digital time
+     ticking in the center. Meant to actually catch the eye, not just sit there as text. */
+  .sticky-today { display:none; position:fixed; top:16px; right:16px; z-index:400; }
   .sticky-today.show { display:block; }
-  .sticky-today-label { font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:#b8b8cc; font-weight:800; }
-  .sticky-today-time {
-    font-size:19px; font-weight:900; font-variant-numeric:tabular-nums; margin-top:2px;
-    background:linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent;
+  .sticky-ring {
+    width:108px; height:108px; border-radius:50%; position:relative;
+    background: conic-gradient(#FF6B6B calc(var(--p,0) * 1%), rgba(255,255,255,.16) 0);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 10px 30px rgba(0,0,0,.32);
+    animation: cdGlow 3.2s ease-in-out infinite;
   }
+  .sticky-ring::before {
+    content:""; position:absolute; inset:7px; border-radius:50%;
+    background: linear-gradient(160deg,#2D2A4A,#1A1A2E);
+  }
+  .sticky-ring-inner { position:relative; z-index:1; text-align:center; }
+  .sticky-today-label {
+    font-size:8px; text-transform:uppercase; letter-spacing:.6px; color:#b8b8cc; font-weight:800;
+  }
+  .sticky-today-time {
+    font-size:16px; font-weight:900; font-variant-numeric:tabular-nums; margin-top:2px;
+    background:linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation: tickPulse 1s steps(1) infinite;
+  }
+  @keyframes tickPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
   .sticky-actions { display:none; position:fixed; top:20px; left:16px; z-index:400; gap:7px; }
   .sticky-actions.show { display:flex; }
   .icon-btn {
@@ -376,8 +404,9 @@
   }
   .icon-btn:hover { transform: translateY(-2px); }
   @media (max-width:640px){
-    .sticky-today { top:auto; bottom:16px; right:12px; padding:7px 12px; }
-    .sticky-today-time { font-size:15px; }
+    .sticky-today { top:auto; bottom:16px; right:12px; }
+    .sticky-ring { width:84px; height:84px; }
+    .sticky-today-time { font-size:13px; }
     .sticky-actions { top:auto; bottom:16px; left:12px; }
     .icon-btn { width:32px; height:32px; font-size:13px; }
   }
@@ -404,10 +433,15 @@
   </div>
 </div>
 
-<!-- Fixed to the viewport, not the page — stays put while the dashboard scrolls beneath it -->
+<!-- Fixed to the viewport, not the page — stays put while the dashboard scrolls beneath it.
+     A dial, not a text box: the ring fills as today burns down, like a stopwatch face. -->
 <div class="sticky-today" id="stickyToday">
-  <div class="sticky-today-label">Left Today</div>
-  <div class="sticky-today-time" id="stickyTodayTime">--:--:--</div>
+  <div class="sticky-ring" id="stickyRing" style="--p:0">
+    <div class="sticky-ring-inner">
+      <div class="sticky-today-time" id="stickyTodayTime">--:--:--</div>
+      <div class="sticky-today-label">Left Today</div>
+    </div>
+  </div>
 </div>
 <div class="sticky-actions" id="stickyActions">
   <button class="icon-btn" onclick="replayReflection()" title="Replay Reflection">🌙</button>
@@ -456,7 +490,7 @@
   <!-- DASHBOARD -->
   <div id="dashboard">
 
-    <!-- MERGED: % lived + how much is left, one card, not two separate rows -->
+    <!-- MERGED: % lived + how much is left, one card, one row -->
     <div class="card" style="--accent:#FF6B6B">
       <div class="hero">
         <div>
@@ -464,41 +498,42 @@
           <div class="sub" id="weekLine"></div>
           <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
         </div>
+
+        <div class="hero-left-col">
+          <div class="card-head-row" style="margin-bottom:6px;">
+            <h2>⏳ Actually Left</h2>
+            <div class="grid-tabs" id="timeScopeTabs">
+              <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Yrs</button>
+              <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
+            </div>
+          </div>
+
+          <div id="scopeAll">
+            <div class="countdown-row" id="lifeCountdown"></div>
+          </div>
+
+          <div id="scopeAwake" style="display:none;">
+            <p class="sub" style="margin-bottom:8px;">Sleep ~<b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> gone before the day starts.</p>
+            <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:10px;">
+              <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
+              <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
+              <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
+              <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+            </div>
+            <div class="big-stat"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:13px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+            <div class="progress-outer" style="margin-top:8px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+            <div class="sub" style="margin-top:6px;" id="awakeSubLine"></div>
+            <div class="sleep-cost-line" id="sleepCostLine"></div>
+          </div>
+
+          <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
+        </div>
+
         <div class="ring-wrap">
           <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
         </div>
       </div>
       <div class="bday-compact" id="birthdayCompact">🎂 —</div>
-
-      <hr class="card-divider">
-
-      <div class="card-head-row">
-        <h2>⏳ How Much Is Actually Left</h2>
-        <div class="grid-tabs" id="timeScopeTabs">
-          <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
-          <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
-        </div>
-      </div>
-
-      <div id="scopeAll">
-        <div class="countdown-row" id="lifeCountdown"></div>
-      </div>
-
-      <div id="scopeAwake" style="display:none;">
-        <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
-        <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
-          <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
-          <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
-          <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
-          <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
-        </div>
-        <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
-        <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
-        <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
-        <div class="sleep-cost-line" id="sleepCostLine"></div>
-      </div>
-
-      <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
     </div>
 
     <div class="card" style="--accent:#2EC4B6">
@@ -530,14 +565,10 @@
 
       <div class="dash-side">
         <div class="card beam-card" style="--accent:#06D6A0">
-          <div class="card-head-row">
-            <h2 id="sideTabHeading">✨ Vibe</h2>
-            <div class="grid-tabs" id="sideTabs">
-              <button class="grid-tab active" data-side="vibe" onclick="setSideTab('vibe')">Vibe</button>
-              <button class="grid-tab" data-side="milestones" onclick="setSideTab('milestones')">Milestones</button>
-              <button class="grid-tab" data-side="trend" onclick="setSideTab('trend')">Trend</button>
-            </div>
-          </div>
+          <!-- pinned at the top, not behind a tab — this is the one thing that should
+               grab focus every time the dashboard opens -->
+          <h2 class="vibe-cta"><span class="pop-emoji">✨</span> Check In — It Matters</h2>
+          <div class="vibe-sub">One tap. It colors today on your life grid.</div>
 
           <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid -->
           <div id="sidePanelVibe">
@@ -561,15 +592,13 @@
             </div>
           </div>
 
-          <div id="sidePanelMilestones" style="display:none;">
-            <div class="milestones" id="milestones"></div>
-            <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
-          </div>
+          <hr class="card-divider">
 
-          <div id="sidePanelTrend" style="display:none;">
-            <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
-            <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here.</div>
+          <div class="card-head-row" style="margin-bottom:8px;">
+            <h2 style="font-size:14px;">🏁 Milestones</h2>
           </div>
+          <div class="milestones-vertical" id="milestones"></div>
+          <div class="sub" id="nextMilestoneLine" style="margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -694,7 +723,7 @@ function closeAdvice(e){
 
 const LIFE_YEARS = 100; // fixed, universal horizon — no estimation, same for everyone
 let wizardData = { name:"", dob:"", sleepHours:8, expectancy: LIFE_YEARS };
-let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years", sideTab = "vibe";
+let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years";
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -963,7 +992,6 @@ function render(d){
   buildMilestones(d);
   refreshCheckinUI();
   startQuoteCarousel();
-  setSideTab(sideTab);
   tick(d);
   animateReveal(d);
   if(tickTimer) clearInterval(tickTimer);
@@ -1002,6 +1030,9 @@ function renderStickyToday(ms){
   const mm = Math.floor(totalSec/60); totalSec -= mm*60;
   const ss = totalSec;
   $("stickyTodayTime").textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
+  // Ring fills as today burns down — 0% right after midnight, 100% right before it.
+  const elapsedPct = Math.min(Math.max((1 - ms/DAY_MS) * 100, 0), 100);
+  $("stickyRing").style.setProperty("--p", elapsedPct);
 }
 
 function tick(d){
@@ -1105,20 +1136,6 @@ function setTimeScope(scope){
   $("lifeArrowLine").innerHTML = scope==="awake"
     ? "↓ Sleep already took its cut. <b>But are you even awake for the rest?</b>"
     : "↓ <b>Life is just this much.</b>";
-}
-
-/* ================= SIDEBAR TABS (Vibe / Milestones / Trend — one card, three views) ================= */
-const SIDE_TAB_HEADINGS = { vibe: "✨ Vibe", milestones: "🏁 Milestones", trend: "📈 Trend" };
-function setSideTab(tab){
-  sideTab = tab;
-  document.querySelectorAll("#sideTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.side===tab));
-  $("sideTabHeading").textContent = SIDE_TAB_HEADINGS[tab];
-  $("sidePanelVibe").style.display = tab==="vibe" ? "block" : "none";
-  $("sidePanelMilestones").style.display = tab==="milestones" ? "block" : "none";
-  $("sidePanelTrend").style.display = tab==="trend" ? "block" : "none";
-  // The chart was hidden (display:none) when its data was first drawn, so Chart.js saw a
-  // 0-width canvas — rebuild it now that the panel is actually visible.
-  if(tab==="trend") buildMoodChart();
 }
 
 /* ================= GRID VIEWS ================= */
@@ -1230,16 +1247,20 @@ const MILESTONE_AGES = [1,5,10,13,16,18,21,25,30,35,40,45,50,55,60,65,70,75,80,8
 function buildMilestones(d){
   const list = MILESTONE_AGES.filter(a => a <= d.expectancy + 5);
   $("milestones").innerHTML = list.map(a =>
-    `<div class="ms-item"><div class="ms-dot future" id="ms-${a}">${a}</div><div class="ms-lbl">${a} yrs</div></div>`
+    `<div class="ms-row future" id="ms-row-${a}"><div class="ms-dot-sm future" id="ms-${a}">${a}</div><div class="ms-row-label">Turning ${a}</div></div>`
   ).join("");
 }
 function updateMilestones(d, s){
   const list = MILESTONE_AGES.filter(a => a <= d.expectancy + 5);
   let next = null;
   list.forEach(a => {
-    const el = $("ms-"+a); if(!el) return;
-    if(s.ageYears >= a){ el.className = "ms-dot done"; el.textContent = "✓"; }
-    else { if(next===null){ next=a; el.className="ms-dot next"; } else el.className="ms-dot future"; el.textContent=a; }
+    const el = $("ms-"+a), row = $("ms-row-"+a); if(!el || !row) return;
+    if(s.ageYears >= a){ el.className = "ms-dot-sm done"; el.textContent = "✓"; row.className = "ms-row done"; }
+    else {
+      if(next===null){ next=a; el.className="ms-dot-sm next"; row.className="ms-row next"; }
+      else { el.className="ms-dot-sm future"; row.className="ms-row future"; }
+      el.textContent=a;
+    }
   });
   $("nextMilestoneLine").textContent = next
     ? `Next milestone: turning ${next} in ~${(next - s.ageYears).toFixed(1)} years`
@@ -1333,7 +1354,6 @@ function refreshCheckinUI(){
     dots += `<div class="hist-dot" style="background:${bg}" title="${key}"></div>`;
   }
   $("histDots").innerHTML = dots;
-  buildMoodChart();
 
   // Today's mood feeds straight into the life grid below — recolor it immediately
   // instead of waiting for the next full render.
@@ -1391,69 +1411,11 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight){
   lines.forEach((l,i)=>ctx.fillText(l.trim(), x, startY + i*lineHeight));
 }
 
-/* ================= MOOD HISTOGRAM (permanent trend, not just 14 days) ================= */
+/* Mood scale — still used to color the life grid by how each stretch of time felt,
+   even though the chart that used to visualize it here has been removed. */
 const MOOD_SCALE_MAP = { "#FF6B6B":1, "#8a8aa0":2, "#2EC4B6":3, "#FFC93C":4, "#9B5DE5":5 };
 const MOOD_SCALE_COLORS = ["#FF6B6B","#8a8aa0","#2EC4B6","#FFC93C","#9B5DE5"];
-const MOOD_SCALE_LABELS = ["","Rough","Okay","Good","Great","Unforgettable"];
 function moodScore(color){ return MOOD_SCALE_MAP[color] || null; }
-function mondayOf(dateStr){
-  const d = new Date(dateStr + "T00:00:00");
-  const day = d.getDay();
-  const diff = (day === 0 ? -6 : 1 - day);
-  d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0,10);
-}
-let moodChartInstance = null;
-function buildMoodChart(){
-  const canvas = $("moodChart");
-  if(!canvas) return;
-  if(typeof Chart === "undefined"){
-    canvas.style.display = "none";
-    $("moodChartEmpty").style.display = "block";
-    $("moodChartEmpty").textContent = "Chart library didn't load (offline, or blocked) — your mood data is still being saved.";
-    return;
-  }
-  const data = getCheckins();
-  const buckets = {};
-  Object.entries(data).forEach(([date, v]) => {
-    if(!v || !v.mood) return;
-    const score = moodScore(v.mood);
-    if(score === null) return;
-    const wk = mondayOf(date);
-    (buckets[wk] = buckets[wk] || []).push(score);
-  });
-  const weekKeys = Object.keys(buckets).sort();
-
-  if(weekKeys.length === 0){
-    $("moodChartEmpty").style.display = "block";
-    canvas.style.display = "none";
-    if(moodChartInstance){ moodChartInstance.destroy(); moodChartInstance = null; }
-    return;
-  }
-  $("moodChartEmpty").style.display = "none";
-  canvas.style.display = "block";
-
-  const labels = weekKeys.map(k => new Date(k+"T00:00:00").toLocaleDateString(undefined,{month:'short',day:'numeric'}));
-  const avgs = weekKeys.map(k => { const a = buckets[k]; return a.reduce((x,y)=>x+y,0)/a.length; });
-  const barColors = avgs.map(v => MOOD_SCALE_COLORS[Math.max(0, Math.min(4, Math.round(v)-1))]);
-
-  if(moodChartInstance) moodChartInstance.destroy();
-  moodChartInstance = new Chart(canvas.getContext("2d"), {
-    type: "bar",
-    data: { labels, datasets: [{ data: avgs, backgroundColor: barColors, borderRadius: 6, barPercentage: 0.7, maxBarThickness: 34 }] },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display:false },
-        tooltip: { callbacks: { label: (ctx) => MOOD_SCALE_LABELS[Math.round(ctx.parsed.y)] || "" } }
-      },
-      scales: {
-        y: { min:0, max:5, ticks: { stepSize:1, callback:(v)=>MOOD_SCALE_LABELS[v]||"" }, grid:{ color:"#f1f1f6" } },
-        x: { grid: { display:false }, ticks: { maxRotation:0, autoSkip:true, maxTicksLimit:10 } }
-      }
-    }
-  });
-}
 
 /* ================= INIT ================= */
 (function(){
