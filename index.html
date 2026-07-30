@@ -34,15 +34,11 @@
     0%,100% { box-shadow: 0 4px 24px rgba(6,214,160,.14); }
     50% { box-shadow: 0 4px 34px rgba(6,214,160,.42); }
   }
-  /* pinned check-in header — beams/pops so it reads as the thing to do first, not just a label */
-  .vibe-cta { display:flex; align-items:center; gap:8px; font-size:15px; margin-bottom:4px; }
-  .vibe-cta .pop-emoji { display:inline-block; animation: popBeam 1.7s ease-in-out infinite; }
   @keyframes popBeam {
     0%,55%,100% { transform: scale(1) rotate(0deg); }
     70% { transform: scale(1.3) rotate(-10deg); }
     85% { transform: scale(1.05) rotate(6deg); }
   }
-  .vibe-sub { font-size:11.5px; color:#06D6A0; font-weight:800; margin-bottom:14px; }
 
   .card {
     background: #ffffff; border-radius: 20px; padding: 22px 24px; margin-bottom: 20px;
@@ -130,22 +126,31 @@
     color:#8a8aa0; background:#FFFBF5; border-radius:999px; padding:8px 16px;
   }
 
-  /* hero now carries three things in one row: the lived stat, the "actually left"
-     countdown, and the ring — merged so there's no separate stacked section below. */
-  .hero { display: grid; grid-template-columns: 1fr 1.25fr 150px; gap: 18px; align-items: center; }
-  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
-  .hero .big-stat { font-size: clamp(20px, 3.6vw, 30px); font-weight: 900; line-height: 1.15; }
+  /* "Where You Stand" — the dial sits beside the number it represents, nothing else
+     competing for the same row. */
+  .hero { display: grid; grid-template-columns: 132px 1fr; gap: 20px; align-items: center; }
+  @media (max-width: 480px) { .hero { grid-template-columns: 1fr; text-align:center; } }
+  .hero .big-stat { font-size: clamp(26px, 4.4vw, 38px); font-weight: 900; line-height: 1.1; }
   .hero .big-stat span.pct { background: linear-gradient(90deg,#FF6B6B,#9B5DE5); -webkit-background-clip:text; background-clip:text; color:transparent; }
-  .hero .big-stat .hero-remain { display:block; font-size: 12.5px; font-weight:700; color:#6b6b80; margin-top:4px; }
+  .hero .big-stat .hero-remain { display:block; font-size: 13px; font-weight:700; color:#6b6b80; margin-top:5px; }
   .hero .big-stat .hero-remain b { color:#06D6A0; font-weight:900; }
-  .hero .sub { color: #6b6b80; font-size: 12.5px; margin-top: 6px; font-weight: 600; }
-  .hero-left-col h2 { font-size: 13px; }
-  .hero-left-col .life-arrow-line { font-size: 12px; margin-top: 10px; }
-  .sleep-cost-line {
-    text-align:center; margin-top:10px; font-size:12.5px; font-weight:700; color:#FF6B6B;
-    background:#FFF3EE; border-radius:10px; padding:9px 12px;
+  .hero .sub { color: #6b6b80; font-size: 12.5px; margin-top: 8px; font-weight: 600; }
+
+  /* one-line framing caption under each card heading — tells you what you're looking at
+     before you have to work it out from the numbers */
+  .card-caption { font-size: 12.5px; color:#8a8aa0; font-weight:600; line-height:1.5; margin: -6px 0 16px; }
+  .card-caption b { color:#55556a; font-weight:800; }
+
+  /* the awake-adjusted figure — one always-visible strip, no second tab to hunt for */
+  .awake-strip {
+    margin-top: 16px; background: linear-gradient(135deg,#F3FBF9,#FFFBF0);
+    border-radius: 14px; padding: 14px 16px; border-left: 4px solid #06D6A0;
   }
-  .progress-outer { background: #f1f1f6; border-radius: 999px; height: 16px; margin-top: 18px; overflow: hidden; }
+  .awake-strip .as-lbl { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing:.5px; color:#06D6A0; }
+  .awake-strip .as-val { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; color:#1A1A2E; margin-top: 2px; }
+  .awake-strip .as-val small { font-size: 13px; font-weight: 800; color:#8a8aa0; }
+  .awake-strip .as-note { font-size: 11.5px; color:#6b6b80; font-weight:600; margin-top: 6px; line-height:1.5; }
+  .progress-outer { background: #f1f1f6; border-radius: 999px; height: 14px; margin-top: 14px; overflow: hidden; }
   .progress-inner { height: 100%; border-radius: 999px; background: linear-gradient(90deg,#FF6B6B,#FFC93C,#2EC4B6); transition: width .6s ease; }
   .ring-wrap { display:flex; align-items:center; justify-content:center; }
   .ring {
@@ -194,7 +199,7 @@
   .cd-box .n { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; background: linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent; }
   .cd-box .u { font-size: 8px; text-transform: uppercase; letter-spacing: .4px; color: #b8b8cc; margin-top: 2px; }
   .life-arrow-line {
-    text-align: center; margin-top: 16px; font-size: 15px; font-weight: 700; color: #6b6b80;
+    text-align: center; margin-top: 14px; font-size: 12.5px; font-weight: 700; color: #8a8aa0;
   }
   .life-arrow-line b { color: #1A1A2E; }
 
@@ -209,6 +214,43 @@
   .weeks-scroll { overflow-x: auto; padding-bottom: 6px; }
   .weeks-grid { display: inline-grid; grid-auto-flow: row; gap: 3px; }
   .wk-row { display:flex; gap:3px; align-items:center; }
+
+  /* every lived block is clickable — hovering makes that obvious */
+  .wk-cell.paintable, .dec-cell.paintable { cursor: pointer; transition: transform .12s ease, box-shadow .12s ease; }
+  .wk-cell.paintable:hover { transform: scale(1.9); box-shadow: 0 2px 8px rgba(0,0,0,.25); position:relative; z-index:5; }
+  .dec-cell.paintable:hover { transform: scale(1.06); box-shadow: 0 4px 14px rgba(0,0,0,.18); }
+
+  /* the color list that pops up when you tap a block */
+  .cell-palette {
+    display:none; position:absolute; z-index:600; background:#fff; border-radius:16px;
+    padding:12px 14px; box-shadow: 0 12px 34px rgba(30,20,60,.22); border:1px solid #f1f1f6;
+    animation: cpIn .16s ease-out;
+  }
+  @keyframes cpIn { from { opacity:0; transform: translateY(-6px) scale(.96); } to { opacity:1; transform:none; } }
+  .cell-palette .cp-title { font-size:11px; font-weight:800; color:#1A1A2E; margin-bottom:2px; white-space:nowrap; }
+  .cell-palette .cp-when { font-size:10px; font-weight:700; color:#b0b0c0; margin-bottom:9px; white-space:nowrap; }
+  .cell-palette .cp-row { display:flex; gap:6px; }
+  .cp-opt {
+    width:36px; height:36px; border-radius:50%; border:2px solid transparent; background:var(--mc);
+    font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition: transform .12s ease; line-height:1;
+  }
+  .cp-opt:hover { transform: translateY(-3px) scale(1.1); }
+  .cell-palette .cp-clear {
+    display:block; width:100%; margin-top:9px; border:none; background:#f1f1f6; color:#8a8aa0;
+    font-size:10.5px; font-weight:800; padding:6px; border-radius:8px; cursor:pointer; font-family:inherit;
+  }
+
+  /* today's check-in, living inside the life card where the blocks actually are */
+  .today-checkin {
+    background: linear-gradient(135deg,#F3FBF9,#FFFAF2); border-radius:16px;
+    padding:14px 16px; margin-bottom:16px; border:1.5px solid #dff6ee;
+    animation: beamPulse 2.6s ease-in-out infinite;
+  }
+  .today-checkin .tc-head { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:900; color:#1A1A2E; }
+  .today-checkin .tc-head .pop-emoji { display:inline-block; animation: popBeam 1.7s ease-in-out infinite; }
+  .today-checkin .tc-sub { font-size:11.5px; font-weight:700; color:#06D6A0; margin:3px 0 11px; }
+  .tc-body { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
   .wk-yr { width:28px; font-size:9px; color:#FF9F1C; font-weight:800; text-align:right; padding-right:4px; flex-shrink:0; }
   .wk-cell { width: 8px; height: 8px; border-radius: 2px; background:#eee; flex-shrink:0; }
   .wk-cell.current { outline: 2px solid #FF3D3D; outline-offset: 1px; animation: pulse 1.4s ease-in-out infinite; }
@@ -220,7 +262,9 @@
 
   /* milestones — a vertical bar of rows instead of a horizontal scroll-strip, so it
      reads top-to-bottom right alongside the life grid. */
-  .milestones-vertical { display:flex; flex-direction:column; gap:5px; max-height: 280px; overflow-y:auto; padding-right:2px; }
+  .milestones-vertical { display:flex; flex-direction:column; gap:4px; max-height: 520px; overflow-y:auto; padding-right:4px; }
+  .milestones-vertical::-webkit-scrollbar { width:5px; }
+  .milestones-vertical::-webkit-scrollbar-thumb { background:#e4e4ee; border-radius:999px; }
   .ms-row { display:flex; align-items:center; gap:10px; padding:5px 7px; border-radius:10px; transition: background .15s ease; }
   .ms-row.done { background:#F0FBF8; }
   .ms-row.next { background:#FFFBF0; }
@@ -443,6 +487,20 @@
     </div>
   </div>
 </div>
+<!-- pops up wherever you tap a block in the life grid -->
+<div class="cell-palette" id="cellPalette">
+  <div class="cp-title">How was this time?</div>
+  <div class="cp-when" id="cpWhen"></div>
+  <div class="cp-row">
+    <button class="cp-opt" style="--mc:#FF6B6B" onclick="applyCellColor('#FF6B6B')" title="Rough">😞</button>
+    <button class="cp-opt" style="--mc:#8a8aa0" onclick="applyCellColor('#8a8aa0')" title="Okay">😐</button>
+    <button class="cp-opt" style="--mc:#2EC4B6" onclick="applyCellColor('#2EC4B6')" title="Good">🙂</button>
+    <button class="cp-opt" style="--mc:#FFC93C" onclick="applyCellColor('#FFC93C')" title="Great">😄</button>
+    <button class="cp-opt" style="--mc:#9B5DE5" onclick="applyCellColor('#9B5DE5')" title="Unforgettable">✨</button>
+  </div>
+  <button class="cp-clear" onclick="applyCellColor(null)">Clear this block</button>
+</div>
+
 <div class="sticky-actions" id="stickyActions">
   <button class="icon-btn" onclick="replayReflection()" title="Replay Reflection">🌙</button>
   <button class="icon-btn" onclick="shareStats()" title="Copy Summary">📋</button>
@@ -454,7 +512,7 @@
 
   <header>
     <h1>MEMENTO MORI<span id="headerName"></span></h1>
-    <p class="tagline">Remember — you will die. So live.</p>
+    <p class="tagline">Remember you will die. Then go live like you mean it.</p>
     <div class="clock" id="liveClock"></div>
   </header>
 
@@ -490,63 +548,46 @@
   <!-- DASHBOARD -->
   <div id="dashboard">
 
-    <!-- MERGED: % lived + how much is left, one card, one row -->
-    <div class="card" style="--accent:#FF6B6B">
-      <div class="hero">
-        <div>
-          <div class="big-stat"><span class="pct" id="pctLived">0%</span> lived<span class="hero-remain"><b id="pctRemain">0%</b> left</span></div>
-          <div class="sub" id="weekLine"></div>
-          <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
-        </div>
-
-        <div class="hero-left-col">
-          <div class="card-head-row" style="margin-bottom:6px;">
-            <h2>⏳ Actually Left</h2>
-            <div class="grid-tabs" id="timeScopeTabs">
-              <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Yrs</button>
-              <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
-            </div>
+    <!-- ROW 1 — where you are, and what's left. Two questions, two cards, side by side. -->
+    <div class="dash-2col">
+      <div class="card" style="--accent:#FF6B6B">
+        <h2>🕰️ Where You Stand</h2>
+        <p class="card-caption">One hundred years, the same frame for everyone. This is how far in you already are.</p>
+        <div class="hero">
+          <div class="ring-wrap">
+            <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
           </div>
-
-          <div id="scopeAll">
-            <div class="countdown-row" id="lifeCountdown"></div>
+          <div>
+            <div class="big-stat"><span class="pct" id="pctLived">0%</span> lived<span class="hero-remain"><b id="pctRemain">0%</b> still yours</span></div>
+            <div class="sub" id="weekLine"></div>
+            <div class="progress-outer"><div class="progress-inner" id="progressBar" style="width:0%"></div></div>
           </div>
-
-          <div id="scopeAwake" style="display:none;">
-            <p class="sub" style="margin-bottom:8px;">Sleep ~<b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> gone before the day starts.</p>
-            <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:10px;">
-              <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
-              <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
-              <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
-              <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
-            </div>
-            <div class="big-stat"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:13px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
-            <div class="progress-outer" style="margin-top:8px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
-            <div class="sub" style="margin-top:6px;" id="awakeSubLine"></div>
-            <div class="sleep-cost-line" id="sleepCostLine"></div>
-          </div>
-
-          <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
         </div>
-
-        <div class="ring-wrap">
-          <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
-        </div>
+        <div class="bday-compact" id="birthdayCompact">🎂 —</div>
       </div>
-      <div class="bday-compact" id="birthdayCompact">🎂 —</div>
+
+      <div class="card" style="--accent:#9B5DE5">
+        <h2>⏳ What's Actually Left</h2>
+        <p class="card-caption">The clock doesn't pause while you sleep — so here's the raw number, and the honest one.</p>
+        <div class="countdown-row" id="lifeCountdown"></div>
+
+        <!-- the honest number: raw years left, minus the third of them you'll spend asleep -->
+        <div class="awake-strip">
+          <div class="as-lbl">Minus <b id="sleepHrsLine">8</b> hrs of sleep a night</div>
+          <div class="as-val"><span id="awakeRemainingVal">0</span> <small>years you're actually awake for</small></div>
+          <div class="progress-outer" style="margin-top:10px;height:10px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+          <div class="as-note" id="sleepCostLine"></div>
+        </div>
+
+        <div class="life-arrow-line" id="lifeArrowLine">↓ <b>That's the whole thing. Every block below.</b></div>
+      </div>
     </div>
 
-    <div class="card" style="--accent:#2EC4B6">
-      <h2>📊 Your Numbers</h2>
-      <div class="stat-headline" id="statHeadline"></div>
-      <div class="stat-grid" id="statGrid"></div>
-    </div>
-
-    <!-- dashboard row: the life grid anchors it, one tabbed card sits beside it instead of three stacked cards -->
+    <!-- ROW 2 — the grid is the point of the whole page, so it gets the most room. -->
     <div class="dash-life-row">
       <div class="card" style="--accent:#FFA94D">
         <div class="card-head-row">
-          <h2>🗓️ Your Life <span class="badge" id="gridTotalBadge"></span></h2>
+          <h2>🗓️ Your Life, Block by Block <span class="badge" id="gridTotalBadge"></span></h2>
           <div class="grid-tabs" id="gridTabs">
             <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
             <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
@@ -554,62 +595,66 @@
             <button class="grid-tab" data-m="decades" onclick="setGridMode('decades')">Decades</button>
           </div>
         </div>
+        <p class="card-caption">Tap <b>any block you've already lived</b> and pick a color for how it went. The empty ones haven't happened yet — that's the part you still get to decide.</p>
+
+        <!-- today's check-in, sitting right on top of the blocks it colors -->
+        <div class="today-checkin">
+          <div class="tc-head"><span class="pop-emoji">✨</span> How is today going?</div>
+          <div class="tc-sub">One tap fills in today's block — and keeps your streak alive.</div>
+          <div class="yesterday-line" id="yesterdayLine" style="display:none;">
+            <span class="yswatch" id="yesterdaySwatch"></span>
+            <span id="yesterdayText"></span>
+          </div>
+          <div class="tc-body">
+            <div class="chip-row" id="moodRow" style="margin:0;">
+              <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
+              <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
+              <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
+              <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
+              <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+            </div>
+            <div class="streak-row" style="margin:0;">
+              <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
+              <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
+            </div>
+          </div>
+          <div class="dot-history" id="histDots" style="margin-top:12px;"></div>
+        </div>
+
         <div class="grid-legend">
-          <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how that stretch of time felt</span>
-          <span><i class="swatch" style="background:#D9A857"></i>Lived, no check-in that day</span>
-          <span><i class="swatch" style="background:#f1f1f6"></i>Future</span>
+          <span><i class="swatch" style="background:#2EC4B6"></i>Colored by how it felt</span>
+          <span><i class="swatch" style="background:#D9A857"></i>Lived, never logged</span>
+          <span><i class="swatch" style="background:#f1f1f6"></i>Not yet yours</span>
           <span><i class="swatch" style="background:#fff;outline:2px solid #FF3D3D"></i>Right now</span>
         </div>
         <div class="weeks-scroll"><div class="weeks-grid" id="weeksGrid"></div></div>
       </div>
 
       <div class="dash-side">
-        <div class="card beam-card" style="--accent:#06D6A0">
-          <!-- pinned at the top, not behind a tab — this is the one thing that should
-               grab focus every time the dashboard opens -->
-          <h2 class="vibe-cta"><span class="pop-emoji">✨</span> Check In — It Matters</h2>
-          <div class="vibe-sub">One tap. It colors today on your life grid.</div>
-
-          <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid -->
-          <div id="sidePanelVibe">
-            <div class="yesterday-line" id="yesterdayLine" style="display:none;">
-              <span class="yswatch" id="yesterdaySwatch"></span>
-              <span id="yesterdayText"></span>
-            </div>
-            <div class="field" style="margin-bottom:0;">
-              <div class="chip-row" id="moodRow">
-                <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
-                <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
-                <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
-                <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
-                <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
-              </div>
-            </div>
-            <div class="streak-row" style="margin-top:16px;">
-              <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
-              <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
-              <div class="dot-history" id="histDots"></div>
-            </div>
-          </div>
-
-          <hr class="card-divider">
-
-          <div class="card-head-row" style="margin-bottom:8px;">
-            <h2 style="font-size:14px;">🏁 Milestones</h2>
-          </div>
+        <div class="card" style="--accent:#06D6A0">
+          <h2>🏁 The Road Ahead</h2>
+          <p class="card-caption">Everything you've already crossed, and everything still in front of you.</p>
           <div class="milestones-vertical" id="milestones"></div>
-          <div class="sub" id="nextMilestoneLine" style="margin-top:8px;"></div>
+          <div class="sub" id="nextMilestoneLine" style="margin-top:10px;"></div>
         </div>
       </div>
     </div>
 
+    <!-- ROW 3 — the arithmetic behind everything above -->
+    <div class="card" style="--accent:#2EC4B6">
+      <h2>📊 The Numbers Behind It</h2>
+      <div class="stat-headline" id="statHeadline"></div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
     <div class="card" style="--accent:#FF6B6B">
-      <h2>✨ Fun Facts About Your Time So Far</h2>
+      <h2>✨ What Your Time Has Added Up To</h2>
+      <p class="card-caption">You didn't count any of these. Your body did them anyway.</p>
       <div class="fun-grid" id="funGrid"></div>
     </div>
 
     <div class="card quote-card">
-      <div class="qtag">Quote of the Day</div>
+      <div class="qtag">People have been sitting with this for 2,000 years</div>
       <q id="quoteText">—</q>
       <div class="auth" id="quoteAuth"></div>
       <div class="quote-dots" id="quoteDots"></div>
@@ -628,6 +673,7 @@ const STORE_KEY = "mementoMoriData_v2";
 const CHECKIN_KEY = "mementoMoriCheckins_v1";
 const PILLARS_KEY = "mementoMoriPillars_v1";
 const LETTERS_KEY = "mementoMoriLetters_v1";
+const PAINT_KEY = "mementoMoriPaints_v1";
 const REFLECTION_KEY = "mementoMoriLastReflection_v1";
 const PROLOGUE_KEY = "mementoMoriPrologueShown_v1";
 const PROLOGUE_CARDS = [
@@ -723,7 +769,7 @@ function closeAdvice(e){
 
 const LIFE_YEARS = 100; // fixed, universal horizon — no estimation, same for everyone
 let wizardData = { name:"", dob:"", sleepHours:8, expectancy: LIFE_YEARS };
-let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years";
+let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks";
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -790,6 +836,7 @@ function resetAll(){
   if(confirm("Clear all saved info (profile and check-ins) from this browser?")){
     localStorage.removeItem(STORE_KEY);
     localStorage.removeItem(CHECKIN_KEY);
+    localStorage.removeItem(PAINT_KEY);
     // legacy keys from earlier versions of this dashboard — harmless to clear if present
     localStorage.removeItem(PILLARS_KEY);
     localStorage.removeItem(LETTERS_KEY);
@@ -1085,29 +1132,19 @@ function tick(d){
   renderAwakeTime(s);
 }
 
-function setAwakeUnit(unit){
-  awakeUnit = unit;
-  document.querySelectorAll("#awakeUnitTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.u===unit));
-  const d = loadJSON(STORE_KEY, null);
-  if(d) renderAwakeTime(computeStats(d));
-}
 function renderAwakeTime(s){
-  const unitLabels = { decades:"decades", years:"years", months:"months", weeks:"weeks" };
   $("sleepHrsLine").textContent = s.sleepHours;
-  $("sleepPctLine").textContent = Math.round((s.sleepHours/24)*100) + "%";
-  $("awakeRemainingVal").textContent = formatAwakeTime(s.awakeYearsRemaining, awakeUnit);
-  $("awakeUnitLabel").textContent = unitLabels[awakeUnit];
+  $("awakeRemainingVal").textContent = formatAwakeTime(s.awakeYearsRemaining, "years");
   const awakePct = s.awakeYearsTotal>0 ? Math.min((s.awakeYearsLived/s.awakeYearsTotal)*100,100) : 0;
   $("awakeProgressBar").style.width = awakePct + "%";
-  $("awakeSubLine").textContent = `${formatAwakeTime(s.awakeYearsLived,"years")} awake-years spent so far, out of ${formatAwakeTime(s.awakeYearsTotal,"years")} total`;
 
   // Connects the sleep number directly to the stakes: how many of the 100 years sleep
   // eats over a full lifetime, and what one fewer hour a night would actually buy back.
   const lifetimeSleepYears = 100 - s.awakeYearsTotal;
   const oneHourGain = 100 / 24;
   $("sleepCostLine").textContent =
-    `At ${s.sleepHours} hrs/night, sleep alone claims about ${lifetimeSleepYears.toFixed(1)} of your 100 years. `+
-    `Cut it by just 1 hour and you'd reclaim roughly ${oneHourGain.toFixed(1)} awake-years over a lifetime.`;
+    `Sleep alone claims about ${lifetimeSleepYears.toFixed(1)} of your 100 years. `+
+    `Give up one hour a night and you'd buy back roughly ${oneHourGain.toFixed(1)} waking years.`;
 }
 
 function renderCountdown(elId, ms, units, includeYears){
@@ -1128,14 +1165,6 @@ function renderCountdown(elId, ms, units, includeYears){
     parts = [dd, hh, mm, totalSec];
   }
   el.innerHTML = parts.map((p,i)=>`<div class="cd-box"><div class="n">${pad(p)}</div><div class="u">${units[i]}</div></div>`).join("");
-}
-function setTimeScope(scope){
-  document.querySelectorAll("#timeScopeTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.scope===scope));
-  $("scopeAll").style.display = scope==="all" ? "block" : "none";
-  $("scopeAwake").style.display = scope==="awake" ? "block" : "none";
-  $("lifeArrowLine").innerHTML = scope==="awake"
-    ? "↓ Sleep already took its cut. <b>But are you even awake for the rest?</b>"
-    : "↓ <b>Life is just this much.</b>";
 }
 
 /* ================= GRID VIEWS ================= */
@@ -1166,6 +1195,77 @@ function moodColorForRange(dobStr, startDays, endDays){
   return MOOD_SCALE_COLORS[Math.max(0, Math.min(4, avg-1))];
 }
 
+/* ================= PAINTING BLOCKS BY HAND =================
+   Daily check-ins color today automatically, but you can also reach back and color any
+   block you've already lived. Those manual paints are stored as date RANGES rather than
+   per-day rows — painting a decade would otherwise write ~3,650 localStorage entries.
+   A cell resolves its color as: hand-painted range → averaged check-in mood → unlogged. */
+function getPaints(){ return loadJSON(PAINT_KEY, []); }
+function dayOffsetToKey(dobStr, days){
+  const d = new Date(dobStr + "T00:00:00");
+  d.setDate(d.getDate() + Math.round(days));
+  return d.toISOString().slice(0,10);
+}
+// Midpoint lookup: a cell takes the color of the last paint that covers its middle.
+// Cheap, and it does the right thing when paints and view modes don't line up exactly.
+function paintColorForRange(dobStr, startDays, endDays){
+  const paints = getPaints();
+  if(!paints.length) return null;
+  const midK = dayOffsetToKey(dobStr, (startDays + endDays) / 2);
+  let found = null;
+  for(const p of paints){ if(midK >= p.s && midK < p.e) found = p.c; }
+  return found;
+}
+function cellColor(dobStr, startDays, endDays){
+  return paintColorForRange(dobStr, startDays, endDays)
+      || moodColorForRange(dobStr, startDays, endDays)
+      || GREY_UNLOGGED;
+}
+
+let paletteTarget = null;
+function openCellPalette(ev, sDays, eDays, label){
+  ev.stopPropagation();
+  paletteTarget = { s: parseFloat(sDays), e: parseFloat(eDays) };
+  const el = $("cellPalette");
+  $("cpWhen").textContent = label || "";
+  el.style.display = "block";
+  const r = ev.currentTarget.getBoundingClientRect();
+  const w = el.offsetWidth || 220, h = el.offsetHeight || 130;
+  // Flip above the cell if there isn't room below it.
+  const below = r.bottom + 10 + h < window.innerHeight;
+  const top = below ? r.bottom + window.scrollY + 8 : r.top + window.scrollY - h - 8;
+  const left = Math.max(10, Math.min(r.left + window.scrollX + r.width/2 - w/2, window.innerWidth - w - 14));
+  el.style.top = top + "px";
+  el.style.left = left + "px";
+}
+function closeCellPalette(){ $("cellPalette").style.display = "none"; paletteTarget = null; }
+function applyCellColor(color){
+  if(!paletteTarget) return;
+  const d = loadJSON(STORE_KEY, null);
+  if(!d){ closeCellPalette(); return; }
+  const sK = dayOffsetToKey(d.dob, paletteTarget.s);
+  const eK = dayOffsetToKey(d.dob, paletteTarget.e);
+  let paints = getPaints();
+  // Clearing drops any paint covering this stretch; recoloring just layers on top.
+  paints = paints.filter(p => !(p.s === sK && p.e === eK));
+  if(color) paints.push({ s: sK, e: eK, c: color });
+  saveJSON(PAINT_KEY, paints);
+
+  // If the block you painted contains today, that also counts as today's check-in —
+  // otherwise the streak and the grid would disagree about the same day.
+  const tK = todayKey();
+  if(color && tK >= sK && tK < eK){
+    const data = getCheckins();
+    data[tK] = Object.assign({}, data[tK], { mood: color, done: true });
+    saveJSON(CHECKIN_KEY, data);
+  }
+  closeCellPalette();
+  refreshCheckinUI();
+}
+document.addEventListener("click", ()=>{ if(paletteTarget) closeCellPalette(); });
+
+// Anything already lived gets the paintable class + a click handler that opens the
+// color list. Future blocks stay inert — you can't rate a week that hasn't happened.
 function buildGrid(mode, d){
   const s = computeStats(d);
   let html = "";
@@ -1176,10 +1276,14 @@ function buildGrid(mode, d){
       html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
       for(let c=0;c<52;c++){
         const idx = r*52+c;
-        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
-        if(idx < s.weeksLived){ style=`background:${moodColorForRange(d.dob, idx*7, (idx+1)*7) || GREY_UNLOGGED}`; }
-        else if(idx===s.weeksLived){ cls+=" current"; style="background:#fff"; }
-        html += `<div class="${cls}" style="${style}" title="Age ${r}, week ${c+1}"></div>`;
+        const lbl = `Age ${r}, week ${c+1}`;
+        if(idx <= s.weeksLived){
+          const isNow = idx === s.weeksLived;
+          const bg = isNow ? "#fff" : cellColor(d.dob, idx*7, (idx+1)*7);
+          html += `<div class="wk-cell paintable${isNow?" current":""}" style="background:${bg}" title="${lbl} — tap to color" onclick="openCellPalette(event, ${idx*7}, ${(idx+1)*7}, '${lbl}')"></div>`;
+        } else {
+          html += `<div class="wk-cell" style="background:${FUTURE_COLOR}" title="${lbl}"></div>`;
+        }
       }
       html += `</div>`;
     }
@@ -1192,10 +1296,15 @@ function buildGrid(mode, d){
       html += `<div class="wk-row">${r%5===0?`<div class="wk-yr">${r}</div>`:`<div class="wk-yr"></div>`}`;
       for(let c=0;c<12;c++){
         const idx = r*12+c;
-        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
-        if(idx < s.monthsLived){ style=`background:${moodColorForRange(d.dob, idx*monthDays, (idx+1)*monthDays) || GREY_UNLOGGED}`; }
-        else if(idx===s.monthsLived){ cls+=" current"; style="background:#fff"; }
-        html += `<div class="${cls}" style="width:14px;height:14px;${style}" title="Age ${r}, month ${c+1}"></div>`;
+        const lbl = `Age ${r}, month ${c+1}`;
+        const sz = "width:14px;height:14px;";
+        if(idx <= s.monthsLived){
+          const isNow = idx === s.monthsLived;
+          const bg = isNow ? "#fff" : cellColor(d.dob, idx*monthDays, (idx+1)*monthDays);
+          html += `<div class="wk-cell paintable${isNow?" current":""}" style="${sz}background:${bg}" title="${lbl} — tap to color" onclick="openCellPalette(event, ${idx*monthDays}, ${(idx+1)*monthDays}, '${lbl}')"></div>`;
+        } else {
+          html += `<div class="wk-cell" style="${sz}background:${FUTURE_COLOR}" title="${lbl}"></div>`;
+        }
       }
       html += `</div>`;
     }
@@ -1209,10 +1318,15 @@ function buildGrid(mode, d){
       for(let c=0;c<10;c++){
         const idx = r*10+c;
         if(idx>=total) break;
-        let cls="wk-cell", style=`background:${FUTURE_COLOR}`;
-        if(idx < yearsLived){ style=`background:${moodColorForRange(d.dob, idx*YEAR_DAYS, (idx+1)*YEAR_DAYS) || GREY_UNLOGGED}`; }
-        else if(idx===yearsLived){ cls+=" current"; style="background:#fff"; }
-        html += `<div class="${cls}" style="width:22px;height:22px;border-radius:5px;${style}" title="Year ${idx+1}"></div>`;
+        const lbl = `Age ${idx}`;
+        const sz = "width:22px;height:22px;border-radius:5px;";
+        if(idx <= yearsLived){
+          const isNow = idx === yearsLived;
+          const bg = isNow ? "#fff" : cellColor(d.dob, idx*YEAR_DAYS, (idx+1)*YEAR_DAYS);
+          html += `<div class="wk-cell paintable${isNow?" current":""}" style="${sz}background:${bg}" title="${lbl} — tap to color" onclick="openCellPalette(event, ${idx*YEAR_DAYS}, ${(idx+1)*YEAR_DAYS}, '${lbl}')"></div>`;
+        } else {
+          html += `<div class="wk-cell" style="${sz}background:${FUTURE_COLOR}" title="${lbl}"></div>`;
+        }
       }
       html += `</div>`;
     }
@@ -1223,19 +1337,22 @@ function buildGrid(mode, d){
     $("gridTotalBadge").textContent = `${totalDecades} decades total`;
     html += `<div class="wk-row" style="flex-wrap:wrap;max-width:640px;">`;
     for(let i=0;i<totalDecades;i++){
-      let cls="dec-cell", inner;
+      const lbl = `Your ${i*10}s`;
+      const dS = i*10*YEAR_DAYS, dE = (i+1)*10*YEAR_DAYS;
+      let cls="dec-cell", inner, click="";
       if(i < decadesLived){
-        const mc = moodColorForRange(d.dob, i*10*YEAR_DAYS, (i+1)*10*YEAR_DAYS) || GREY_UNLOGGED;
-        inner = `<div class="fillbar" style="width:100%;background:${mc}"></div>`;
+        cls += " paintable";
+        click = ` onclick="openCellPalette(event, ${dS}, ${dE}, '${lbl}')"`;
+        inner = `<div class="fillbar" style="width:100%;background:${cellColor(d.dob, dS, dE)}"></div>`;
       } else if(i===decadesLived){
         const pct = Math.round((decadesLivedExact - decadesLived)*100);
-        const mc = moodColorForRange(d.dob, i*10*YEAR_DAYS, decadesLivedExact*10*YEAR_DAYS) || GREY_UNLOGGED;
-        cls+=" current";
-        inner = `<div class="fillbar" style="width:${pct}%;background:${mc}"></div><div class="fillbar" style="width:100%;background:${FUTURE_COLOR};z-index:-1;"></div>`;
+        cls += " current paintable";
+        click = ` onclick="openCellPalette(event, ${dS}, ${dE}, '${lbl}')"`;
+        inner = `<div class="fillbar" style="width:${pct}%;background:${cellColor(d.dob, dS, decadesLivedExact*10*YEAR_DAYS)}"></div><div class="fillbar" style="width:100%;background:${FUTURE_COLOR};z-index:-1;"></div>`;
       } else {
         inner = `<div class="fillbar" style="width:100%;background:${FUTURE_COLOR}"></div>`;
       }
-      html += `<div class="${cls}" title="Decade ${i+1} (age ${i*10}-${i*10+10})">${inner}<div style="position:relative;z-index:1;text-align:center;padding-top:14px;font-size:10px;font-weight:800;color:#1A1A2E;">${i*10}s</div></div>`;
+      html += `<div class="${cls}" title="${lbl} (age ${i*10}–${i*10+10})"${click}>${inner}<div style="position:relative;z-index:1;text-align:center;padding-top:14px;font-size:10px;font-weight:800;color:#1A1A2E;">${i*10}s</div></div>`;
     }
     html += `</div>`;
   }
