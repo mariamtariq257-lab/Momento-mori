@@ -355,6 +355,32 @@
     padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;
   }
   .yesterday-line .yswatch { width:16px; height:16px; border-radius:50%; flex-shrink:0; }
+
+  /* ---------- STICKY CORNER WIDGETS (today's clock + quick actions, always in view) ---------- */
+  .sticky-today {
+    display:none; position:fixed; top:16px; right:16px; z-index:400; text-align:center;
+    background: linear-gradient(160deg,#2D2A4A,#1A1A2E); color:#fff; border-radius:14px;
+    padding:9px 16px; box-shadow:0 8px 24px rgba(0,0,0,.25); animation: cdGlow 3.2s ease-in-out infinite;
+  }
+  .sticky-today.show { display:block; }
+  .sticky-today-label { font-size:9px; text-transform:uppercase; letter-spacing:.5px; color:#b8b8cc; font-weight:800; }
+  .sticky-today-time {
+    font-size:19px; font-weight:900; font-variant-numeric:tabular-nums; margin-top:2px;
+    background:linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .sticky-actions { display:none; position:fixed; top:20px; left:16px; z-index:400; gap:7px; }
+  .sticky-actions.show { display:flex; }
+  .icon-btn {
+    width:36px; height:36px; border-radius:50%; border:none; background:#fff; box-shadow:0 4px 12px rgba(30,20,60,.15);
+    font-size:15px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform .15s ease;
+  }
+  .icon-btn:hover { transform: translateY(-2px); }
+  @media (max-width:640px){
+    .sticky-today { top:auto; bottom:16px; right:12px; padding:7px 12px; }
+    .sticky-today-time { font-size:15px; }
+    .sticky-actions { top:auto; bottom:16px; left:12px; }
+    .icon-btn { width:32px; height:32px; font-size:13px; }
+  }
 </style>
 </head>
 <body>
@@ -376,6 +402,18 @@
     <div id="adviceSub">A thought for tomorrow</div>
     <button class="btn tiny" style="margin-top:20px;width:100%;" onclick="closeAdvice(event)">Got it →</button>
   </div>
+</div>
+
+<!-- Fixed to the viewport, not the page — stays put while the dashboard scrolls beneath it -->
+<div class="sticky-today" id="stickyToday">
+  <div class="sticky-today-label">Left Today</div>
+  <div class="sticky-today-time" id="stickyTodayTime">--:--:--</div>
+</div>
+<div class="sticky-actions" id="stickyActions">
+  <button class="icon-btn" onclick="replayReflection()" title="Replay Reflection">🌙</button>
+  <button class="icon-btn" onclick="shareStats()" title="Copy Summary">📋</button>
+  <button class="icon-btn" onclick="editInfo()" title="Edit">✏️</button>
+  <button class="icon-btn" onclick="resetAll()" title="Reset">↺</button>
 </div>
 
 <div class="wrap">
@@ -418,22 +456,8 @@
   <!-- DASHBOARD -->
   <div id="dashboard">
 
-    <div class="topbar">
-      <div class="actions" style="margin-left:auto;">
-        <button class="btn secondary tiny" onclick="replayReflection()">🌙 Replay Reflection</button>
-        <button class="btn secondary tiny" onclick="shareStats()">📋 Copy Summary</button>
-        <button class="btn secondary tiny" onclick="editInfo()">✏️ Edit</button>
-        <button class="btn secondary tiny" onclick="resetAll()">↺ Reset</button>
-      </div>
-    </div>
-
-    <!-- MERGED: today's countdown + % of life lived, one glance, one card -->
-    <div class="card today-card" style="--accent:#FF9F1C">
-      <h2>🔥 Today <span class="badge today-badge">LIVE</span></h2>
-      <div class="countdown-row" id="todayCountdown"></div>
-      <div class="sub" style="text-align:center;margin-top:10px;">How will you use the time that's left of today? What actually matters gets done now, not "eventually."</div>
-      <div class="bday-compact" id="birthdayCompact">🎂 —</div>
-      <hr class="card-divider">
+    <!-- MERGED: % lived + how much is left, one card, not two separate rows -->
+    <div class="card" style="--accent:#FF6B6B">
       <div class="hero">
         <div>
           <div class="big-stat"><span class="pct" id="pctLived">0%</span> lived<span class="hero-remain"><b id="pctRemain">0%</b> left</span></div>
@@ -444,48 +468,46 @@
           <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
         </div>
       </div>
-    </div>
+      <div class="bday-compact" id="birthdayCompact">🎂 —</div>
 
-    <!-- dashboard row: two side-by-side info cards instead of two full-width stacked ones -->
-    <div class="dash-2col">
-      <div class="card" style="--accent:#9B5DE5">
-        <div class="card-head-row">
-          <h2>⏳ How Much Is Actually Left</h2>
-          <div class="grid-tabs" id="timeScopeTabs">
-            <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
-            <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
-          </div>
+      <hr class="card-divider">
+
+      <div class="card-head-row">
+        <h2>⏳ How Much Is Actually Left</h2>
+        <div class="grid-tabs" id="timeScopeTabs">
+          <button class="grid-tab active" data-scope="all" onclick="setTimeScope('all')">All 100 Years</button>
+          <button class="grid-tab" data-scope="awake" onclick="setTimeScope('awake')">Awake Only</button>
         </div>
-
-        <div id="scopeAll">
-          <div class="countdown-row" id="lifeCountdown"></div>
-        </div>
-
-        <div id="scopeAwake" style="display:none;">
-          <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
-          <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
-            <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
-            <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
-            <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
-            <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
-          </div>
-          <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
-          <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
-          <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
-          <div class="sleep-cost-line" id="sleepCostLine"></div>
-        </div>
-
-        <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
       </div>
 
-      <div class="card" style="--accent:#2EC4B6">
-        <h2>📊 Your Numbers</h2>
-        <div class="stat-headline" id="statHeadline"></div>
-        <div class="stat-grid" id="statGrid"></div>
+      <div id="scopeAll">
+        <div class="countdown-row" id="lifeCountdown"></div>
       </div>
+
+      <div id="scopeAwake" style="display:none;">
+        <p class="sub" style="margin-bottom:10px;">You sleep roughly <b id="sleepHrsLine">8</b> hrs/day — <span id="sleepPctLine">33%</span> of every day gone before it even starts.</p>
+        <div class="grid-tabs" id="awakeUnitTabs" style="margin-bottom:14px;">
+          <button class="grid-tab" data-u="decades" onclick="setAwakeUnit('decades')">Decades</button>
+          <button class="grid-tab active" data-u="years" onclick="setAwakeUnit('years')">Years</button>
+          <button class="grid-tab" data-u="months" onclick="setAwakeUnit('months')">Months</button>
+          <button class="grid-tab" data-u="weeks" onclick="setAwakeUnit('weeks')">Weeks</button>
+        </div>
+        <div class="big-stat" style="text-align:center;"><span class="pct" id="awakeRemainingVal">0</span> <span id="awakeUnitLabel" style="font-size:16px;font-weight:700;color:#8a8aa0;">years</span> awake, left</div>
+        <div class="progress-outer" style="margin-top:12px;"><div class="progress-inner" id="awakeProgressBar" style="width:0%;background:linear-gradient(90deg,#06D6A0,#2EC4B6);"></div></div>
+        <div class="sub" style="text-align:center;margin-top:8px;" id="awakeSubLine"></div>
+        <div class="sleep-cost-line" id="sleepCostLine"></div>
+      </div>
+
+      <div class="life-arrow-line" id="lifeArrowLine">↓ <b>Life is just this much.</b></div>
     </div>
 
-    <!-- dashboard row: the life grid anchors it, everything that feeds/explains it sits beside it -->
+    <div class="card" style="--accent:#2EC4B6">
+      <h2>📊 Your Numbers</h2>
+      <div class="stat-headline" id="statHeadline"></div>
+      <div class="stat-grid" id="statGrid"></div>
+    </div>
+
+    <!-- dashboard row: the life grid anchors it, one tabbed card sits beside it instead of three stacked cards -->
     <div class="dash-life-row">
       <div class="card" style="--accent:#FFA94D">
         <div class="card-head-row">
@@ -507,40 +529,47 @@
       </div>
 
       <div class="dash-side">
-        <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid -->
         <div class="card beam-card" style="--accent:#06D6A0">
-          <h2>✨ What's The Vibe Today? <span class="badge">colors the grid</span></h2>
-          <div class="yesterday-line" id="yesterdayLine" style="display:none;">
-            <span class="yswatch" id="yesterdaySwatch"></span>
-            <span id="yesterdayText"></span>
-          </div>
-          <div class="field" style="margin-bottom:0;">
-            <div class="chip-row" id="moodRow">
-              <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
-              <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
-              <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
-              <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
-              <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+          <div class="card-head-row">
+            <h2 id="sideTabHeading">✨ Vibe</h2>
+            <div class="grid-tabs" id="sideTabs">
+              <button class="grid-tab active" data-side="vibe" onclick="setSideTab('vibe')">Vibe</button>
+              <button class="grid-tab" data-side="milestones" onclick="setSideTab('milestones')">Milestones</button>
+              <button class="grid-tab" data-side="trend" onclick="setSideTab('trend')">Trend</button>
             </div>
           </div>
-          <div class="streak-row" style="margin-top:16px;">
-            <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
-            <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
-            <div class="dot-history" id="histDots"></div>
+
+          <!-- DAILY CHECK-IN — picking a mood both logs today AND colors the life grid -->
+          <div id="sidePanelVibe">
+            <div class="yesterday-line" id="yesterdayLine" style="display:none;">
+              <span class="yswatch" id="yesterdaySwatch"></span>
+              <span id="yesterdayText"></span>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <div class="chip-row" id="moodRow">
+                <button class="mood-swatch" style="--mc:#FF6B6B" onclick="setMood('#FF6B6B',this)" title="Rough">😞</button>
+                <button class="mood-swatch" style="--mc:#8a8aa0" onclick="setMood('#8a8aa0',this)" title="Okay">😐</button>
+                <button class="mood-swatch" style="--mc:#2EC4B6" onclick="setMood('#2EC4B6',this)" title="Good">🙂</button>
+                <button class="mood-swatch" style="--mc:#FFC93C" onclick="setMood('#FFC93C',this)" title="Great">😄</button>
+                <button class="mood-swatch" style="--mc:#9B5DE5" onclick="setMood('#9B5DE5',this)" title="Unforgettable">✨</button>
+              </div>
+            </div>
+            <div class="streak-row" style="margin-top:16px;">
+              <div class="streak-badge" id="streakCurrent">0<small>Day Streak</small></div>
+              <div class="streak-badge" style="background:linear-gradient(135deg,#4D96FF,#9B5DE5)" id="streakBest">0<small>Best Streak</small></div>
+              <div class="dot-history" id="histDots"></div>
+            </div>
           </div>
-        </div>
 
-        <div class="card" style="--accent:#06D6A0">
-          <h2>🏁 Milestones</h2>
-          <div class="milestones" id="milestones"></div>
-          <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
-        </div>
+          <div id="sidePanelMilestones" style="display:none;">
+            <div class="milestones" id="milestones"></div>
+            <div class="sub" id="nextMilestoneLine" style="text-align:center;margin-top:6px;"></div>
+          </div>
 
-        <!-- MOOD HISTOGRAM -->
-        <div class="card" style="--accent:#4D96FF">
-          <h2>📈 Mood Trend</h2>
-          <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
-          <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here.</div>
+          <div id="sidePanelTrend" style="display:none;">
+            <div class="chart-wrap"><canvas id="moodChart"></canvas></div>
+            <div class="chart-empty" id="moodChartEmpty">Check in with a mood a few times and your trend line shows up here.</div>
+          </div>
         </div>
       </div>
     </div>
@@ -665,7 +694,7 @@ function closeAdvice(e){
 
 const LIFE_YEARS = 100; // fixed, universal horizon — no estimation, same for everyone
 let wizardData = { name:"", dob:"", sleepHours:8, expectancy: LIFE_YEARS };
-let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years";
+let quoteIdx = 0, quoteTimer = null, tickTimer = null, gridMode = "weeks", awakeUnit = "years", sideTab = "vibe";
 
 function $(id){ return document.getElementById(id); }
 function pad(n){ return String(n).padStart(2,"0"); }
@@ -724,6 +753,8 @@ function editInfo(){
   }
   $("dashboard").style.display = "none";
   $("wizardCard").style.display = "block";
+  $("stickyToday").classList.remove("show");
+  $("stickyActions").classList.remove("show");
 }
 
 function resetAll(){
@@ -925,11 +956,14 @@ function render(d){
   $("wizardCard").style.display = "none";
   $("dashboard").style.display = "block";
   $("headerName").textContent = d.name ? `— ${d.name}'s` : "";
+  $("stickyToday").classList.add("show");
+  $("stickyActions").classList.add("show");
 
   buildGrid(gridMode, d);
   buildMilestones(d);
   refreshCheckinUI();
   startQuoteCarousel();
+  setSideTab(sideTab);
   tick(d);
   animateReveal(d);
   if(tickTimer) clearInterval(tickTimer);
@@ -962,13 +996,12 @@ function animateReveal(d){
     }
   });
 }
-function renderHMS(elId, ms){
+function renderStickyToday(ms){
   let totalSec = Math.max(Math.floor(ms/1000), 0);
   const hh = Math.floor(totalSec/3600); totalSec -= hh*3600;
   const mm = Math.floor(totalSec/60); totalSec -= mm*60;
   const ss = totalSec;
-  $(elId).innerHTML = [[hh,"HRS"],[mm,"MIN"],[ss,"SEC"]]
-    .map(([p,u])=>`<div class="cd-box"><div class="n">${pad(p)}</div><div class="u">${u}</div></div>`).join("");
+  $("stickyTodayTime").textContent = `${pad(hh)}:${pad(mm)}:${pad(ss)}`;
 }
 
 function tick(d){
@@ -991,7 +1024,7 @@ function tick(d){
   $("birthdayCompact").textContent = `🎂 Next birthday in ${bDays} day${bDays===1?'':'s'}`;
 
   const todayEnd = new Date(s.now.getFullYear(), s.now.getMonth(), s.now.getDate()+1, 0,0,0);
-  renderHMS("todayCountdown", todayEnd - s.now);
+  renderStickyToday(todayEnd - s.now);
 
   // Headline first, numbers second — one plain-English sentence so the grid below
   // doesn't need decoding before it means anything.
@@ -1072,6 +1105,20 @@ function setTimeScope(scope){
   $("lifeArrowLine").innerHTML = scope==="awake"
     ? "↓ Sleep already took its cut. <b>But are you even awake for the rest?</b>"
     : "↓ <b>Life is just this much.</b>";
+}
+
+/* ================= SIDEBAR TABS (Vibe / Milestones / Trend — one card, three views) ================= */
+const SIDE_TAB_HEADINGS = { vibe: "✨ Vibe", milestones: "🏁 Milestones", trend: "📈 Trend" };
+function setSideTab(tab){
+  sideTab = tab;
+  document.querySelectorAll("#sideTabs .grid-tab").forEach(b=>b.classList.toggle("active", b.dataset.side===tab));
+  $("sideTabHeading").textContent = SIDE_TAB_HEADINGS[tab];
+  $("sidePanelVibe").style.display = tab==="vibe" ? "block" : "none";
+  $("sidePanelMilestones").style.display = tab==="milestones" ? "block" : "none";
+  $("sidePanelTrend").style.display = tab==="trend" ? "block" : "none";
+  // The chart was hidden (display:none) when its data was first drawn, so Chart.js saw a
+  // 0-width canvas — rebuild it now that the panel is actually visible.
+  if(tab==="trend") buildMoodChart();
 }
 
 /* ================= GRID VIEWS ================= */
