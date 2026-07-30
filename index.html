@@ -241,16 +241,55 @@
     font-size:10.5px; font-weight:800; padding:6px; border-radius:8px; cursor:pointer; font-family:inherit;
   }
 
-  /* today's check-in, living inside the life card where the blocks actually are */
+  /* today's check-in, living inside the life card where the blocks actually are.
+     While today is unlogged it floats, glows and wiggles — it should be impossible
+     to scroll past without noticing. Once logged, all of that stops. */
   .today-checkin {
-    background: linear-gradient(135deg,#F3FBF9,#FFFAF2); border-radius:16px;
-    padding:14px 16px; margin-bottom:16px; border:1.5px solid #dff6ee;
-    animation: beamPulse 2.6s ease-in-out infinite;
+    position:relative; border-radius:18px; padding:16px 18px; margin-bottom:18px;
+    background: linear-gradient(135deg,#F3FBF9,#FFFAF2);
+    border:2px solid #dff6ee; transition: border-color .3s ease, background .3s ease;
   }
-  .today-checkin .tc-head { display:flex; align-items:center; gap:7px; font-size:14px; font-weight:900; color:#1A1A2E; }
-  .today-checkin .tc-head .pop-emoji { display:inline-block; animation: popBeam 1.7s ease-in-out infinite; }
-  .today-checkin .tc-sub { font-size:11.5px; font-weight:700; color:#06D6A0; margin:3px 0 11px; }
+  .today-checkin.needs-you {
+    background: linear-gradient(135deg,#FFF8E6,#FFF1F3,#F0FBF7);
+    background-size: 220% 220%;
+    border-color:#FFC93C;
+    animation: tcFloat 2.4s ease-in-out infinite, tcGlow 2.4s ease-in-out infinite, tcShift 9s ease infinite;
+  }
+  @keyframes tcFloat { 0%,100%{ transform: translateY(0); } 50%{ transform: translateY(-5px); } }
+  @keyframes tcGlow {
+    0%,100% { box-shadow: 0 6px 18px rgba(255,201,60,.22); }
+    50%     { box-shadow: 0 14px 34px rgba(255,159,28,.46); }
+  }
+  @keyframes tcShift { 0%,100%{ background-position:0% 50%; } 50%{ background-position:100% 50%; } }
+
+  /* little "fill me in" flag riding the top corner */
+  .tc-flag {
+    display:none; position:absolute; top:-11px; right:14px;
+    background:linear-gradient(90deg,#FF6B6B,#FF9F1C); color:#fff;
+    font-size:9.5px; font-weight:900; letter-spacing:.5px; text-transform:uppercase;
+    padding:4px 11px; border-radius:999px; box-shadow:0 4px 12px rgba(255,107,107,.4);
+    animation: flagBob 1.3s ease-in-out infinite;
+  }
+  .today-checkin.needs-you .tc-flag { display:block; }
+  @keyframes flagBob { 0%,100%{ transform: translateY(0) rotate(-2deg); } 50%{ transform: translateY(-3px) rotate(2deg); } }
+
+  .today-checkin .tc-head { display:flex; align-items:center; gap:8px; font-size:15.5px; font-weight:900; color:#1A1A2E; }
+  .today-checkin .tc-head .pop-emoji { display:inline-block; animation: popBeam 1.7s ease-in-out infinite; font-size:18px; }
+  .today-checkin .tc-sub { font-size:12px; font-weight:800; color:#FF9F1C; margin:4px 0 12px; }
+  .today-checkin.logged .tc-sub { color:#06D6A0; }
   .tc-body { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+
+  /* the swatches themselves breathe until one of them is picked */
+  .today-checkin.needs-you .mood-swatch { animation: swatchWiggle 2.6s ease-in-out infinite; }
+  .today-checkin.needs-you .mood-swatch:nth-child(2) { animation-delay:.12s; }
+  .today-checkin.needs-you .mood-swatch:nth-child(3) { animation-delay:.24s; }
+  .today-checkin.needs-you .mood-swatch:nth-child(4) { animation-delay:.36s; }
+  .today-checkin.needs-you .mood-swatch:nth-child(5) { animation-delay:.48s; }
+  @keyframes swatchWiggle {
+    0%,72%,100% { transform: translateY(0) scale(1); }
+    80% { transform: translateY(-6px) scale(1.12); }
+    88% { transform: translateY(0) scale(1); }
+  }
   .wk-yr { width:28px; font-size:9px; color:#FF9F1C; font-weight:800; text-align:right; padding-right:4px; flex-shrink:0; }
   .wk-cell { width: 8px; height: 8px; border-radius: 2px; background:#eee; flex-shrink:0; }
   .wk-cell.current { outline: 2px solid #FF3D3D; outline-offset: 1px; animation: pulse 1.4s ease-in-out infinite; }
@@ -408,6 +447,43 @@
   #adviceEmoji { font-size:44px; margin-bottom:10px; }
   #adviceText { font-size:17px; font-weight:800; color:#1A1A2E; line-height:1.4; }
   #adviceSub { font-size:12.5px; color:#8a8aa0; font-weight:700; margin-top:10px; text-transform:uppercase; letter-spacing:.04em; }
+  #adviceQuote {
+    margin-top:16px; padding-top:14px; border-top:1.5px solid #f1f1f6;
+    font-size:13.5px; font-style:italic; font-weight:600; color:#55556a; line-height:1.55;
+  }
+  #adviceQuote span { display:block; font-style:normal; font-size:11px; font-weight:800; color:#9B5DE5; margin-top:7px; letter-spacing:.03em; }
+
+  /* ---------- THE 5-SECOND NUDGE (asks how today's going, once a day) ---------- */
+  #nudgeOverlay {
+    display:none; position:fixed; inset:0; z-index:1000; align-items:center; justify-content:center;
+    background:rgba(26,26,46,.6); backdrop-filter: blur(4px); padding:20px;
+  }
+  #nudgeCard {
+    background:#fff; border-radius:24px; max-width:400px; width:100%; padding:32px 26px 26px; text-align:center;
+    box-shadow:0 24px 70px rgba(0,0,0,.34);
+    transform:scale(.86) translateY(14px); opacity:0;
+    transition: transform .34s cubic-bezier(.34,1.56,.64,1), opacity .3s ease;
+  }
+  #nudgeOverlay.show #nudgeCard { transform:scale(1) translateY(0); opacity:1; }
+  #nudgeCard .nd-emoji { font-size:46px; animation: popBeam 1.7s ease-in-out infinite; }
+  #nudgeCard h3 { font-size:22px; font-weight:900; color:#1A1A2E; margin:10px 0 6px; }
+  #nudgeCard .nd-sub { font-size:13px; font-weight:700; color:#8a8aa0; line-height:1.5; margin-bottom:22px; }
+  #nudgeCard .nd-row { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .nd-opt {
+    width:54px; border:none; background:none; cursor:pointer; font-family:inherit;
+    display:flex; flex-direction:column; align-items:center; gap:6px; padding:0;
+  }
+  .nd-opt .nd-dot {
+    width:50px; height:50px; border-radius:50%; background:var(--mc); font-size:24px;
+    display:flex; align-items:center; justify-content:center; line-height:1;
+    box-shadow:0 5px 14px rgba(0,0,0,.16); transition: transform .16s ease;
+  }
+  .nd-opt:hover .nd-dot { transform: translateY(-5px) scale(1.12); }
+  .nd-opt .nd-lbl { font-size:9.5px; font-weight:800; color:#8a8aa0; text-transform:uppercase; letter-spacing:.3px; }
+  #nudgeCard .nd-skip {
+    margin-top:20px; border:none; background:none; color:#b0b0c0;
+    font-size:12px; font-weight:800; cursor:pointer; font-family:inherit; text-decoration:underline;
+  }
   .yesterday-line {
     font-size:13px; font-weight:700; color:#55556a; background:#f7f7fb; border-radius:12px;
     padding:10px 14px; margin-bottom:14px; display:flex; align-items:center; gap:10px;
@@ -420,23 +496,24 @@
   .sticky-today { display:none; position:fixed; top:16px; right:16px; z-index:400; }
   .sticky-today.show { display:block; }
   .sticky-ring {
-    width:108px; height:108px; border-radius:50%; position:relative;
+    width:132px; height:132px; border-radius:50%; position:relative;
     background: conic-gradient(#FF6B6B calc(var(--p,0) * 1%), rgba(255,255,255,.16) 0);
     display:flex; align-items:center; justify-content:center;
     box-shadow: 0 10px 30px rgba(0,0,0,.32);
     animation: cdGlow 3.2s ease-in-out infinite;
   }
   .sticky-ring::before {
-    content:""; position:absolute; inset:7px; border-radius:50%;
+    content:""; position:absolute; inset:8px; border-radius:50%;
     background: linear-gradient(160deg,#2D2A4A,#1A1A2E);
   }
   .sticky-ring-inner { position:relative; z-index:1; text-align:center; }
   .sticky-today-label {
-    font-size:8px; text-transform:uppercase; letter-spacing:.6px; color:#b8b8cc; font-weight:800;
+    font-size:9px; text-transform:uppercase; letter-spacing:.7px; color:#c9c9e0; font-weight:800; margin-top:1px;
   }
+  /* solid mustard rather than a gradient-clipped fill — far more legible on the dark dial */
   .sticky-today-time {
-    font-size:16px; font-weight:900; font-variant-numeric:tabular-nums; margin-top:2px;
-    background:linear-gradient(90deg,#FFC93C,#FF6B6B); -webkit-background-clip:text; background-clip:text; color:transparent;
+    font-size:21px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-.4px;
+    color:#FFC93C; text-shadow: 0 0 14px rgba(255,201,60,.45);
     animation: tickPulse 1s steps(1) infinite;
   }
   @keyframes tickPulse { 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.06); } }
@@ -449,8 +526,9 @@
   .icon-btn:hover { transform: translateY(-2px); }
   @media (max-width:640px){
     .sticky-today { top:auto; bottom:16px; right:12px; }
-    .sticky-ring { width:84px; height:84px; }
-    .sticky-today-time { font-size:13px; }
+    .sticky-ring { width:100px; height:100px; }
+    .sticky-today-time { font-size:16px; }
+    .sticky-today-label { font-size:8px; }
     .sticky-actions { top:auto; bottom:16px; left:12px; }
     .icon-btn { width:32px; height:32px; font-size:13px; }
   }
@@ -473,7 +551,25 @@
     <div id="adviceEmoji">✨</div>
     <div id="adviceText">—</div>
     <div id="adviceSub">A thought for tomorrow</div>
+    <div id="adviceQuote"></div>
     <button class="btn tiny" style="margin-top:20px;width:100%;" onclick="closeAdvice(event)">Got it →</button>
+  </div>
+</div>
+
+<!-- Fires five seconds after the dashboard opens, once a day, only if today is unlogged. -->
+<div id="nudgeOverlay" onclick="closeNudge(event)">
+  <div id="nudgeCard" onclick="event.stopPropagation()">
+    <div class="nd-emoji">👋</div>
+    <h3>So… how's it going?</h3>
+    <div class="nd-sub">Today is one block on your grid. Tell me what color it should be — it takes one tap, and you'll never get this day back to log it later.</div>
+    <div class="nd-row">
+      <button class="nd-opt" onclick="nudgePick('#FF6B6B')"><span class="nd-dot" style="--mc:#FF6B6B">😞</span><span class="nd-lbl">Rough</span></button>
+      <button class="nd-opt" onclick="nudgePick('#8a8aa0')"><span class="nd-dot" style="--mc:#8a8aa0">😐</span><span class="nd-lbl">Okay</span></button>
+      <button class="nd-opt" onclick="nudgePick('#2EC4B6')"><span class="nd-dot" style="--mc:#2EC4B6">🙂</span><span class="nd-lbl">Good</span></button>
+      <button class="nd-opt" onclick="nudgePick('#FFC93C')"><span class="nd-dot" style="--mc:#FFC93C">😄</span><span class="nd-lbl">Great</span></button>
+      <button class="nd-opt" onclick="nudgePick('#9B5DE5')"><span class="nd-dot" style="--mc:#9B5DE5">✨</span><span class="nd-lbl">Unreal</span></button>
+    </div>
+    <button class="nd-skip" onclick="closeNudge(event)">Not right now</button>
   </div>
 </div>
 
@@ -551,8 +647,8 @@
     <!-- ROW 1 — where you are, and what's left. Two questions, two cards, side by side. -->
     <div class="dash-2col">
       <div class="card" style="--accent:#FF6B6B">
-        <h2>🕰️ Where You Stand</h2>
-        <p class="card-caption">One hundred years, the same frame for everyone. This is how far in you already are.</p>
+        <h2>🕰️ You Are Here</h2>
+        <p class="card-caption">A hundred years, the same frame for everyone. You're further in than it feels.</p>
         <div class="hero">
           <div class="ring-wrap">
             <div class="ring" id="ring" style="--p:0"><div class="ring-txt"><b id="ringPct">0%</b><small>LIVED</small></div></div>
@@ -567,8 +663,8 @@
       </div>
 
       <div class="card" style="--accent:#9B5DE5">
-        <h2>⏳ What's Actually Left</h2>
-        <p class="card-caption">The clock doesn't pause while you sleep — so here's the raw number, and the honest one.</p>
+        <h2>⏳ The Part You Haven't Spent Yet</h2>
+        <p class="card-caption">The clock never pauses for sleep. So here's the flattering number — and the honest one.</p>
         <div class="countdown-row" id="lifeCountdown"></div>
 
         <!-- the honest number: raw years left, minus the third of them you'll spend asleep -->
@@ -587,7 +683,7 @@
     <div class="dash-life-row">
       <div class="card" style="--accent:#FFA94D">
         <div class="card-head-row">
-          <h2>🗓️ Your Life, Block by Block <span class="badge" id="gridTotalBadge"></span></h2>
+          <h2>🗓️ Your Whole Life, In Little Squares <span class="badge" id="gridTotalBadge"></span></h2>
           <div class="grid-tabs" id="gridTabs">
             <button class="grid-tab active" data-m="weeks" onclick="setGridMode('weeks')">Weeks</button>
             <button class="grid-tab" data-m="months" onclick="setGridMode('months')">Months</button>
@@ -599,6 +695,7 @@
 
         <!-- today's check-in, sitting right on top of the blocks it colors -->
         <div class="today-checkin">
+          <div class="tc-flag">👇 Fill me in</div>
           <div class="tc-head"><span class="pop-emoji">✨</span> How is today going?</div>
           <div class="tc-sub">One tap fills in today's block — and keeps your streak alive.</div>
           <div class="yesterday-line" id="yesterdayLine" style="display:none;">
@@ -632,8 +729,8 @@
 
       <div class="dash-side">
         <div class="card" style="--accent:#06D6A0">
-          <h2>🏁 The Road Ahead</h2>
-          <p class="card-caption">Everything you've already crossed, and everything still in front of you.</p>
+          <h2>🏁 Still Coming For You</h2>
+          <p class="card-caption">Every line you've already crossed — and the ones patiently waiting.</p>
           <div class="milestones-vertical" id="milestones"></div>
           <div class="sub" id="nextMilestoneLine" style="margin-top:10px;"></div>
         </div>
@@ -642,14 +739,15 @@
 
     <!-- ROW 3 — the arithmetic behind everything above -->
     <div class="card" style="--accent:#2EC4B6">
-      <h2>📊 The Numbers Behind It</h2>
+      <h2>📊 The Receipts</h2>
+      <p class="card-caption">No poetry here. Just the arithmetic holding up everything above.</p>
       <div class="stat-headline" id="statHeadline"></div>
       <div class="stat-grid" id="statGrid"></div>
     </div>
 
     <div class="card" style="--accent:#FF6B6B">
-      <h2>✨ What Your Time Has Added Up To</h2>
-      <p class="card-caption">You didn't count any of these. Your body did them anyway.</p>
+      <h2>✨ Things You Did Without Even Trying</h2>
+      <p class="card-caption">You never counted a single one of these. Your body kept the tally anyway.</p>
       <div class="fun-grid" id="funGrid"></div>
     </div>
 
@@ -724,27 +822,27 @@ const MOOD_META = {
     "A rough day doesn't erase a good life. Let it end here — tomorrow starts clean.",
     "You survived it. That's the whole job today. Rest, and try again tomorrow.",
     "Bad days are data, not verdicts. Notice what made it hard, then let it go."
-  ]},
+  ], quote:["We suffer more often in imagination than in reality.","Seneca"]},
   "#8a8aa0": { emoji:"😐", label:"Okay", advice:[
     "Okay days are the quiet majority of a life. They still count.",
     "Not every day needs to be remarkable. Showing up is enough.",
     "Neutral is underrated — it means nothing broke. Build tomorrow from here."
-  ]},
+  ], quote:["Begin at once to live, and count each separate day as a separate life.","Seneca"]},
   "#2EC4B6": { emoji:"🙂", label:"Good", advice:[
     "Notice what made today good — do more of exactly that, on purpose.",
     "A good ordinary day is the actual goal. You just had one.",
     "Write down one thing from today. Future-you will want the reminder."
-  ]},
+  ], quote:["Confine yourself to the present.","Marcus Aurelius"]},
   "#FFC93C": { emoji:"😄", label:"Great", advice:[
     "Days like this are why you're doing all of it. Let it sink in for a second.",
     "Great days deserve a pause before you rush to the next thing. Sit with it.",
     "Bank this feeling. It's proof of what's possible on an ordinary Tuesday."
-  ]},
+  ], quote:["Dwell on the beauty of life. Watch the stars, and see yourself running with them.","Marcus Aurelius"]},
   "#9B5DE5": { emoji:"✨", label:"Unforgettable", advice:[
     "You'll remember this one. Tell someone about it before the details fade.",
     "This is a page worth dog-earing. Write down why it mattered.",
     "Days like this are rare on purpose — that's what makes them worth chasing again."
-  ]}
+  ], quote:["Life is long if you know how to use it.","Seneca"]}
 };
 function adviceFor(color){
   const meta = MOOD_META[color];
@@ -756,9 +854,52 @@ function showAdvice(color){
   $("adviceEmoji").textContent = meta.emoji;
   $("adviceText").textContent = adviceFor(color);
   $("adviceSub").textContent = `Today felt: ${meta.label}`;
+  // A line from someone who felt the same way a couple thousand years ago.
+  $("adviceQuote").innerHTML = `“${meta.quote[0]}”<span>— ${meta.quote[1]}</span>`;
   const ov = $("adviceOverlay");
   ov.style.display = "flex";
   requestAnimationFrame(()=>ov.classList.add("show"));
+}
+
+/* ================= THE 5-SECOND NUDGE =================
+   If today hasn't been logged, the dashboard asks — once per day, five seconds after it
+   opens, so you've had a moment to look around first. Picking a mood here does exactly
+   what the inline swatches do, then hands off to the advice + quote card. */
+const NUDGE_KEY = "mementoMoriNudgeShown_v1";
+let nudgeTimer = null;
+function maybeNudgeCheckin(){
+  if(nudgeTimer) clearTimeout(nudgeTimer);
+  const data = getCheckins();
+  if(data[todayKey()] && data[todayKey()].mood) return;   // already logged today
+  if(localStorage.getItem(NUDGE_KEY) === todayKey()) return; // already asked today
+  nudgeTimer = setTimeout(function attempt(){
+    const data2 = getCheckins();
+    if(data2[todayKey()] && data2[todayKey()].mood) return;  // logged during the wait
+    // Never stack on top of the opening reflection — wait for it to finish, then ask.
+    if($("reflectionOverlay").style.display === "flex"){
+      nudgeTimer = setTimeout(attempt, 2500);
+      return;
+    }
+    localStorage.setItem(NUDGE_KEY, todayKey());
+    const ov = $("nudgeOverlay");
+    ov.style.display = "flex";
+    requestAnimationFrame(()=>ov.classList.add("show"));
+  }, 5000);
+}
+function closeNudge(e){
+  if(e) e.stopPropagation();
+  const ov = $("nudgeOverlay");
+  ov.classList.remove("show");
+  setTimeout(()=>{ ov.style.display = "none"; }, 220);
+}
+function nudgePick(color){
+  const data = getCheckins();
+  const k = todayKey();
+  data[k] = Object.assign({}, data[k], { mood: color, done: true });
+  saveJSON(CHECKIN_KEY, data);
+  closeNudge();
+  refreshCheckinUI();
+  setTimeout(()=>showAdvice(color), 260);
 }
 function closeAdvice(e){
   if(e) e.stopPropagation();
@@ -837,6 +978,7 @@ function resetAll(){
     localStorage.removeItem(STORE_KEY);
     localStorage.removeItem(CHECKIN_KEY);
     localStorage.removeItem(PAINT_KEY);
+    localStorage.removeItem(NUDGE_KEY);
     // legacy keys from earlier versions of this dashboard — harmless to clear if present
     localStorage.removeItem(PILLARS_KEY);
     localStorage.removeItem(LETTERS_KEY);
@@ -1044,6 +1186,7 @@ function render(d){
   if(tickTimer) clearInterval(tickTimer);
   tickTimer = setInterval(()=>tick(d), 1000);
   maybeAutoReflection(d);
+  maybeNudgeCheckin();
 }
 function animateReveal(d){
   const s = computeStats(d);
@@ -1454,6 +1597,19 @@ function refreshCheckinUI(){
     const mc = btn.style.getPropertyValue("--mc").trim();
     btn.classList.toggle("picked", !!(today && today.mood && today.mood.trim() === mc));
   });
+  // The whole card shouts (floats, glows, wiggles) until today is logged — then it calms
+  // down and just reports back. Nothing to nag about once you've answered.
+  const logged = !!(today && today.mood);
+  const tc = document.querySelector(".today-checkin");
+  if(tc){
+    tc.classList.toggle("needs-you", !logged);
+    tc.classList.toggle("logged", logged);
+    const sub = tc.querySelector(".tc-sub");
+    if(sub) sub.textContent = logged
+      ? "Logged. Today's block is colored in — see it on the grid below."
+      : "One tap fills in today's block. Miss it and this day stays blank forever.";
+  }
+
   const st = getStreaks();
   $("streakCurrent").innerHTML = st.current + "<small>Day Streak</small>";
   $("streakBest").innerHTML = st.best + "<small>Best Streak</small>";
